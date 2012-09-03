@@ -3,22 +3,58 @@
 """\
 Link To The Past - a backup tool
 
-Command line front-end.
+Restore and insprection tool.
 
 (C) 2012 cliechti@gmx.net
 """
-
-import sys
-import optparse
-
-import link_to_the_past
-from link_to_the_past import config_file_parser
-
-import glob
 import os
+import glob
+import logging
+
+import config_file_parser
+from backup import *
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+class FileList(config_file_parser.ContolFileParser):
+    """Parser for file lists"""
+
+    def word_f(self):
+        """Parse file info"""
+        entry = BackupFile()
+        entry.st_mode = int(self.next_word())
+        entry.st_uid = int(self.next_word())
+        entry.st_gid = int(self.next_word())
+        entry.st_size = int(self.next_word())
+        entry.st_mtime = float(self.next_word())
+        entry.path = entry.unescape(self.next_word())
+
+    def word_dir(self):
+        """Parse directory info"""
+        entry = BackupDirectory(None)
+        entry.st_mode = int(self.next_word())
+        entry.st_uid = int(self.next_word())
+        entry.st_gid = int(self.next_word())
+        entry.st_mtime = float(self.next_word())
+        entry.path = entry.unescape(self.next_word())
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+class Restore(Backup):
+    def __init__(self):
+        Backup.__init__(self)
+        self.files_in_backup = []
+
+    def load_file_list(self):
+        logging.debug('Loading file list')
+        f = FileList(self)
+        f.load_file(os.path.join(self.current_backup_path, 'file_list'))
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def main():
-    import logging
+    import optparse
+    import sys
 
     parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
 
@@ -30,12 +66,12 @@ def main():
         action = 'append'
     )
 
-    parser.add_option("-f", "--force",
-        dest = "force",
-        help = "Enforce certain operations (e.g. making a backup even if there is no change)",
-        default = False,
-        action = 'store_true'
-    )
+    #~ parser.add_option("-f", "--force",
+        #~ dest = "force",
+        #~ help = "Enforce certain operations (e.g. making a backup even if there is no change)",
+        #~ default = False,
+        #~ action = 'store_true'
+    #~ )
 
     parser.add_option("--debug",
         dest = "debug",
@@ -66,8 +102,8 @@ def main():
         level = logging.ERROR
     logging.basicConfig(level=level)
 
-    b = link_to_the_past.Backup()
-    c = config_file_parser.BackupControl(b)
+    b = Restore()
+    c = BackupControl(b)
     for filename in options.control:
         try:
             c.load_file(filename)
@@ -80,9 +116,7 @@ def main():
     action = args.pop(0)
 
     try:
-        if action == 'backup':
-            b.create(options.force)
-        elif action == 'list':
+        if action == 'list':
             backups = glob.glob(os.path.join(b.target_path, '????-??-??_??????'))
             for name in backups:
                 sys.stdout.write('%s\n' % (name[len(b.target_path)+len(os.sep):],))
@@ -91,18 +125,15 @@ def main():
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
         elif action == 'ls':
             b.find_latest_backup()
-            path = b.last_backup_path
+            b.current_backup_path = b.last_backup_path
+            b.load_file_list()
+            path = b.current_backup_path
             if args:
                 path += os.sep + args[0]
             print os.listdir(path)
-        elif action == 'test':
-            print b
-            print "Target:", b.target_path
-            print "Sources:", b.source_locations
-            print "Excludes (1):", b.source_locations[-1].excludes
         else:
             parser.error('unknown ACTION: %r' % (action,))
-    except link_to_the_past.BackupException as e:
+    except BackupException as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)
 

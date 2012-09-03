@@ -40,14 +40,18 @@ def words_in_file(filename, fileobj=None, include_newline=False):
     if fileobj is None:
         fileobj = codecs.open(filename, 'r', 'utf-8')
     for n, line in enumerate(fileobj):
-        for word in m_comment.sub('', line).split():
+        # - ensure escaped spaces are do not include a space "\ " -> "\x20"
+        # - remove comment
+        # - remove whitespace and beginning and end
+        # - split on whitespace
+        for word in m_comment.sub('', line.replace('\ ', '\x20')).split():
             yield Word(word, filename, n+1, line)
         if include_newline:
             yield Word('\n', filename, n+1, line)
 
 
 class ContolFileParser(object):
-
+    """Parser for a simple language using white space separated words"""
     def __init__(self, backup):
         self.backup = backup
         self.root = '.'
@@ -81,22 +85,10 @@ class ContolFileParser(object):
         self.root = os.path.dirname(os.path.abspath(filename))
         self.parse(words_in_file(filename))
 
-
-class BackupControl(ContolFileParser):
-
-    def word_target(self):
-        self.backup.set_target_path(self.path(self.next_word()))
-
-    def word_location(self):
-        self.backup.source_locations.append(Location(self.path(self.next_word())))
-
-    #~ def word_include(self):
-    def word_exclude(self):
-        self.backup.source_locations[-1].excludes.append(ShellPattern(self.next_word()))
-
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == '__main__':
-    b = Backup('example_backups')
+    b = Backup()
     p = BackupControl(b)
     p.parse(words_in_file(sys.argv[1]))
     print b

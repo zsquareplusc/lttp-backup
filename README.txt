@@ -40,8 +40,6 @@ incompatible.
   support backing up via protocols like ssh, ftp etc. Typically the target
   will be a USB disk or memory stick but it also works well with storage in
   the network, e.g. a NAS mounted via NFS.
-- XXX Symbolic links can not be checked for modifications and are therefore always
-  copied.
 - Time stamps are stored in microsecond resolution (some file systems allow
   higher accuracy, if this is need by the application, do not use this backup
   tool). Change detection works at a resolution of 10µs (this should not be a
@@ -88,6 +86,7 @@ TODO and ideas
 - do not cross filesystems
 - option to leave out hard links -> just incremental copies. for dumb
   filesystems as target. better than no backup..
+- automatically load config file from target location
 
 notes
 D 0666 1000 1000 2137489234 /path/to/file
