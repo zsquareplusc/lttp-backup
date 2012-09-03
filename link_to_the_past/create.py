@@ -174,13 +174,11 @@ def main():
         sys.exit(0)
 
     b = Create()
-    c = BackupControl(b)
-    for filename in options.control:
-        try:
-            c.load_file(filename)
-        except IOError as e:
-            sys.stderr.write('Failed to load config: %s\n' % (e,))
-            sys.exit(1)
+    try:
+        b.load_configurations(options.control)
+    except IOError as e:
+        sys.stderr.write('Failed to load configuration: %s\n' % (e,))
+        sys.exit(1)
 
     try:
         b.create(options.force)

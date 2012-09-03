@@ -85,12 +85,13 @@ def main():
         elif action == 'list':
             backups = glob.glob(os.path.join(b.target_path, '????-??-??_??????'))
             for name in backups:
-                sys.stdout.write('%s\n' % (name[len(b.target_path)+len(os.sep):],))
+                sys.stdout.write('%s\n' % (name,))
             bad_backups = glob.glob(os.path.join(b.target_path, '????-??-??_??????_incomplete'))
             if bad_backups:
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
         elif action == 'ls':
             b.find_latest_backup()
+            b.load_file_list()
             path = b.last_backup_path
             if args:
                 path += os.sep + args[0]

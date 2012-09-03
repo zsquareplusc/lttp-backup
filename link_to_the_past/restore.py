@@ -8,7 +8,7 @@ Restore and insprection tool.
 (C) 2012 cliechti@gmx.net
 """
 import os
-import glob
+import fnmatch
 import logging
 
 import config_file_parser
@@ -28,6 +28,7 @@ class FileList(config_file_parser.ContolFileParser):
         entry.st_size = int(self.next_word())
         entry.st_mtime = float(self.next_word())
         entry.path = entry.unescape(self.next_word())
+        self.backup.files_in_backup.append(entry)
 
     def word_dir(self):
         """Parse directory info"""
@@ -37,6 +38,7 @@ class FileList(config_file_parser.ContolFileParser):
         entry.st_gid = int(self.next_word())
         entry.st_mtime = float(self.next_word())
         entry.path = entry.unescape(self.next_word())
+        self.backup.files_in_backup.append(entry)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -103,13 +105,11 @@ def main():
     logging.basicConfig(level=level)
 
     b = Restore()
-    c = BackupControl(b)
-    for filename in options.control:
-        try:
-            c.load_file(filename)
-        except IOError as e:
-            sys.stderr.write('Failed to load config: %s\n' % (e,))
-            sys.exit(1)
+    try:
+        b.load_configurations(options.control)
+    except IOError as e:
+        sys.stderr.write('Failed to load configuration: %s\n' % (e,))
+        sys.exit(1)
 
     if not args:
         parser.error('Expected ACTION')
@@ -117,20 +117,24 @@ def main():
 
     try:
         if action == 'list':
-            backups = glob.glob(os.path.join(b.target_path, '????-??-??_??????'))
+            backups = b.find_backups()
+            backups.sort()
             for name in backups:
-                sys.stdout.write('%s\n' % (name[len(b.target_path)+len(os.sep):],))
-            bad_backups = glob.glob(os.path.join(b.target_path, '????-??-??_??????_incomplete'))
+                sys.stdout.write('%s\n' % (name,))
+            bad_backups = b.find_incomplete_backups()
             if bad_backups:
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
         elif action == 'ls':
             b.find_latest_backup()
             b.current_backup_path = b.last_backup_path
             b.load_file_list()
-            path = b.current_backup_path
             if args:
-                path += os.sep + args[0]
-            print os.listdir(path)
+                path = os.sep + args[0]
+            else:
+                path = '*'
+            for item in b.files_in_backup:
+                if fnmatch.fnmatch(item.path, path):
+                    sys.stdout.write('%s\n' % (item,))
         else:
             parser.error('unknown ACTION: %r' % (action,))
     except BackupException as e:

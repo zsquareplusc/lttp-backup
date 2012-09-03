@@ -255,15 +255,28 @@ class Backup(object):
     def set_target_path(self, path):
         self.target_path = os.path.normpath(path)
 
+    def find_backups(self):
+        backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????'))
+        return [name[len(self.target_path)+len(os.sep):] for name in backups]
+
+    def find_incomplete_backups(self):
+        backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????_incomplete'))
+        return [name[len(self.target_path)+len(os.sep):] for name in backups]
+
     def find_latest_backup(self):
         """Locate the last backup. It is used as reference"""
-        backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????'))
+        backups = self.find_backups()
         if backups:
             backups.sort()
-            self.last_backup_path = backups[-1]
+            self.last_backup_path = os.path.join(self.target_path, backups[-1])
             logging.debug('Latest backup: %s' % (self.last_backup_path,))
         else:
             logging.info('No previous backup found')
+
+    def load_configurations(self, file_list):
+        c = BackupControl(self)
+        for filename in file_list:
+            c.load_file(filename)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
