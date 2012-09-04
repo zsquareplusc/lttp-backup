@@ -46,6 +46,39 @@ incompatible.
   problem as making a backup certainly takes longer than that).
 
 
+Command Line Tool
+=================
+
+general options:
+    -v                  make outputs more verbose, can be given multiple times
+    -q                  switch off messages
+    --debug             for the programmer: shows tracebacks for failures
+
+Create Backups
+--------------
+python -m link_to_the_past.create -c CONFIGURATION
+
+options:
+    -c CONFIGURATION    load given configuration file
+    --full              copy all items, do not depend on last backup.
+    -f, --force         create backup anyway, even if no files have changed
+
+Restore Files
+-------------
+python -m link_to_the_past.restore -c CONFIGURATION ACTION [...]
+
+options:
+    -c CONFIGURATION    load given configuration file
+    -t TIMESPEC         specify a backup, default (option not given, is to use
+                        the latest backup)
+
+actions:
+    list                list all backups
+    ls [PATTERN]        list files of backup, optionally filtered by PATTERN
+    cp SRC DST          copy a single file from the backup (SRC) to DST
+    cat SRC             dump single file from the backup (SRC) to stdout
+
+
 Configuration file format
 =========================
 - line oriented
@@ -61,38 +94,21 @@ Backup control files
 
 File Lists
 ----------
-- dir <mode> <uid> <gid> <path>
-- f <mode> <uid> <gid> <size> <path>
-- l <path>
+- p1 <mode> <uid> <gid> <size> <atime> <mtime> <flags> <path>
 
 
 TODO and ideas
 ==============
-- save file list, load that list for last backup instead of scanning
-- make items read-only, store permissions elsewhere
-- command line tool
-- list, backup, restore, cat, grep commands
-  - list backups
-  - list files in one backup
+- commands
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
-  - cat, output one file in one backup
-  - cp, copy a file from one backup to given target path or file name
 - differential time specs: lttp cat /some/file -t "1 month ago"
-- track changes in contents and meta data separately. there is no need to copy
-  the file if just some meta data has changed (e.g. uid, permissions)
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
 - do not cross filesystems
-- option to leave out hard links -> just incremental copies. for dumb
-  filesystems as target. better than no backup..
 - automatically load config file from target location
-
-notes
-D 0666 1000 1000 2137489234 /path/to/file
-F 0666 1000 1000 230897423 1234 /path/to/directory
-drwxrwxr-x 1000 1000 812 230897423 /path/to/directory
-# comment, line continuation \
-
-include /home/lch
-exclude */.gvfs
+- timeit
+- secure
+- timespec module, regexp
+- profile module
+  - search ~/.lttp and ./lttp

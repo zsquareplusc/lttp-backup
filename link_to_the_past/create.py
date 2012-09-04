@@ -23,7 +23,6 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.enforce_new_backup = False
         self.saved_items = []
         self.bytes_required = 0
         self.files_changed = 0
@@ -45,9 +44,12 @@ class Create(Backup):
 
     def finalize_target(self):
         """Complete the backup"""
-        # rename directory
+        # finish file list
         self.file_list.close()
         self.file_list = None
+        # make file list also read only
+        os.chmod(os.path.join(self.current_backup_path, 'file_list'), stat.S_IRUSR|stat.S_IRGRP)
+        # remove the '_incomplete' suffix
         os.rename(self.current_backup_path, self.base_name)
 
     def scan_last_backup(self):
@@ -65,7 +67,7 @@ class Create(Backup):
         self.bytes_required = 0
         self.files_changed = 0
         for item in self.saved_items:
-            if isinstance(item, BackupFile) and item.changed:
+            if item.changed:
                 self.bytes_required += item.size
                 self.files_changed += 1
 
@@ -87,12 +89,12 @@ class Create(Backup):
         if t.f_favail < len(self.saved_items):
             raise BackupException('target file system will not allow to create that many files')
 
-    def create(self, force=False):
-        #~ self.read_config()
+    def create(self, force=False, full_backup=False):
+        """Create a backup"""
         # find files to backup
         self.scan_sources()
         # find latest backup to work incrementally
-        if not self.enforce_new_backup:
+        if not full_backup:
             self.find_latest_backup()
         self.scan_last_backup()
         if not self.files_changed and not force:
@@ -104,9 +106,14 @@ class Create(Backup):
             #~ print p
         # backup files
         self.prepare_target()
+        logging.debug('Copying/linking files')
         for p in self.saved_items:
             p.create()
             self.file_list.write(p.file_list_command)
+        # secure directories (make then read-only too)
+        logging.debug('Making directories read-only')
+        for p in self.saved_items:
+            p.secure()
         self.finalize_target()
         logging.info('Created %s' % (self.base_name,))
 
@@ -129,6 +136,12 @@ def main():
     parser.add_option("-f", "--force",
         dest = "force",
         help = "Enforce certain operations (e.g. making a backup even if there is no change)",
+        default = False,
+        action = 'store_true'
+    )
+    parser.add_option("--full",
+        dest = "full_backup",
+        help = "always create copy (do not use previous backup to hard link)",
         default = False,
         action = 'store_true'
     )
@@ -177,14 +190,17 @@ def main():
     try:
         b.load_configurations(options.control)
     except IOError as e:
-        sys.stderr.write('Failed to load configuration: %s\n' % (e,))
+        sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
         sys.exit(1)
 
+    t_start = time.time()
     try:
-        b.create(options.force)
+        b.create(options.force, options.full_backup)
     except BackupException as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)
+    t_end = time.time()
+    logging.info('Backup took %.1f seconds' % ((t_end - t_start),))
 
 
 if __name__ == '__main__':

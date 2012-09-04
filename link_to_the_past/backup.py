@@ -35,7 +35,10 @@ def nice_bytes(value):
     while value >= 1000 and exp < len(EXPONENTS):
         value /= 1000
         exp += 1
-    return '%.3f%sB' % (value, EXPONENTS[exp])
+    if exp:
+        return '%.1f%sB' % (value, EXPONENTS[exp])
+    else:
+        return '%dB' % (value,)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -44,13 +47,70 @@ class BackupException(Exception):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def mode_to_chars(mode):
+    """ls like mode as character sequence"""
+    flags = []
+    # file type
+    if stat.S_ISDIR(mode):
+        flags.append('d')
+    elif stat.S_ISCHR(mode):
+        flags.append('c')
+    elif stat.S_ISBLK(mode):
+        flags.append('b')
+    elif stat.S_ISREG(mode):
+        flags.append('-')
+    elif stat.S_ISFIFO(mode):
+        flags.append('p')
+    elif stat.S_ISLNK(mode):
+        flags.append('l')
+    elif stat.S_ISSOCK(mode):
+        flags.append('s')
+    else:
+        flags.append('?')
+    # user permissions
+    flags.append('r' if (mode & stat.S_IRUSR) else '-')
+    flags.append('w' if (mode & stat.S_IWUSR) else '-')
+    if mode & stat.S_ISUID:
+        flags.append('s' if (mode & stat.S_IXUSR) else 'S')
+    else:
+        flags.append('x' if (mode & stat.S_IXUSR) else '-')
+    # group permissions
+    flags.append('r' if (mode & stat.S_IRGRP) else '-')
+    flags.append('w' if (mode & stat.S_IWGRP) else '-')
+    if mode & stat.S_ISGID:
+        flags.append('s' if (mode & stat.S_IXGRP) else 'S')
+    else:
+        flags.append('x' if (mode & stat.S_IXGRP) else '-')
+    # others permissions
+    flags.append('r' if (mode & stat.S_IROTH) else '-')
+    flags.append('w' if (mode & stat.S_IWOTH) else '-')
+    if mode & stat.S_ISGID:
+        flags.append('s' if (mode & stat.S_IXGRP) else 'S')
+    elif mode & stat.S_ISVTX:
+        flags.append('T' if (mode & stat.S_IXOTH) else 't')
+    else:
+        flags.append('x' if (mode & stat.S_IXOTH) else '-')
+    # XXX alternate access character omitted
+
+    return ''.join(flags)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 class BackupPath(object):
     """Representing an object that is contained in the backup"""
-    __slots__ = ['path', 'backup', 'changed', 'st_size', 'st_mode', 'st_uid', 'st_gid', 'st_mtime']
+    __slots__ = ['path', 'backup', 'changed', 'st_size', 'st_mode', 'st_uid',
+                 'st_gid', 'st_atime', 'st_mtime', 'st_flags']
 
     def __init__(self, path=None):
         self.path = path
         self.backup = None
+        self.st_size = 0
+        self.st_uid = None
+        self.st_gid = None
+        self.st_mode = None
+        self.st_mtime = None
+        self.st_atime = None
+        self.st_flags = None
         if path is not None:
             stat_now = os.lstat(path)
             self.st_size = stat_now.st_size
@@ -58,6 +118,9 @@ class BackupPath(object):
             self.st_gid = stat_now.st_gid
             self.st_mode = stat_now.st_mode
             self.st_mtime = stat_now.st_mtime
+            self.st_atime = stat_now.st_atime
+            if hasattr(stat_now, 'st_flags'):
+                self.st_flags = stat_now.st_flags
         self.changed = False
         # XXX track changes of contents and meta data separately?
 
@@ -65,8 +128,19 @@ class BackupPath(object):
     def size(self):
         return self.st_size
 
+    @property
+    def abs_path(self):
+        """Return absolute and full path to file within the current backup"""
+        return self.join(self.backup.current_backup_path, self.path)
+
     def __str__(self):
-        return self.path
+        return '%s %s %s %6s %s %s' % (
+                mode_to_chars(self.st_mode),
+                self.st_uid,
+                self.st_gid,
+                nice_bytes(self.st_size),
+                time.strftime('%Y-%m-%d %02H:%02M:%02S', time.localtime(self.st_mtime)),
+                self.path)
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.path)
@@ -82,6 +156,37 @@ class BackupPath(object):
         """Escape control non printable characters and the space"""
         return path.decode('unicode-escape').replace('\\ ', ' ')
 
+    def set_stat(self, path, make_readonly=False):
+        """\
+        Apply all stat info (mode bits, atime, mtime, flags) to path.
+        Optionally make it read-only.
+        """
+        if hasattr(os, 'utime'):
+            os.utime(path, (self.st_atime, self.st_mtime))
+        if hasattr(os, 'chmod'):
+            mode = self.st_mode
+            if make_readonly:
+                mode &= ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH)
+            os.chmod(path, mode)
+        if hasattr(os, 'chflags'):
+            try:
+                os.chflags(path, self.st_flags)
+            except OSError as why:
+                if (not hasattr(errno, 'EOPNOTSUPP') or
+                    why.errno != errno.EOPNOTSUPP):
+                    raise
+    @property
+    def file_list_command(self):
+        return 'p1 %s %s %s %s %.6f %.6f %s %s\n' % (
+                self.st_mode,
+                self.st_uid,
+                self.st_gid,
+                self.st_size,
+                self.st_atime,
+                self.st_mtime,
+                self.st_flags if self.st_flags is not None else '-',
+                self.escaped(self.path))
+
 
 class BackupFile(BackupPath):
     """Information about a file as well as operations"""
@@ -90,12 +195,6 @@ class BackupFile(BackupPath):
     def check_changes(self):
         """Compare the original file with the backup"""
         prev = os.lstat(os.path.join(self.backup.last_backup_path, self.path))
-        #~ if (    self.stat_now.st_mode != prev.st_mode or
-                #~ self.stat_now.st_uid != prev.st_uid or
-                #~ self.stat_now.st_gid != prev.st_gid or
-                #~ self.stat_now.st_size != prev.st_size or
-                #~ self.stat_now.st_mode != prev.st_mode or
-                #~ abs(self.stat_now.st_mtime - prev.st_mtime) > 0.00001): # as it is a float...
         # ignore changes in meta data. just look at the contents
         if (self.st_size != prev.st_size or
                 abs(self.st_mtime - prev.st_mtime) > 0.00001): # 10us; as it is a float...
@@ -109,7 +208,8 @@ class BackupFile(BackupPath):
             linkto = os.readlink(self.path)
             os.symlink(linkto, dst)
         else:
-            shutil.copy2(self.path, dst)
+            shutil.copy(self.path, dst)
+            self.set_stat(dst, make_readonly=True)
         # XXX make read-only
 
     def link(self):
@@ -118,7 +218,7 @@ class BackupFile(BackupPath):
         src = self.join(self.backup.last_backup_path, self.path)
         dst = self.join(self.backup.current_backup_path, self.path)
         os.link(src, dst)
-        shutil.copystat(src, dst)
+        self.set_stat(dst, make_readonly=True)
 
     def create(self):
         """Backup the file, either by hard linking or copying"""
@@ -127,15 +227,10 @@ class BackupFile(BackupPath):
         else:
             self.link()
 
-    @property
-    def file_list_command(self):
-        return 'f %s %s %s %s %.6f %s\n' % (
-                self.st_mode,
-                self.st_uid,
-                self.st_gid,
-                self.st_size,
-                self.st_mtime,
-                self.escaped(self.path))
+    def secure(self):
+        """Secure backup against manipulation (make read-only)"""
+        # nothing to do here as that was already done when creating
+        # the copy
 
     def restore(self, dst):
         """Create a copy of the file"""
@@ -145,11 +240,17 @@ class BackupFile(BackupPath):
             linkto = os.readlink(src)
             os.symlink(linkto, dst)
         else:
-            shutil.copy2(src, dst)
+            # copy and apply mode, flags, mtime etc
+            shutil.copy(src, dst)
+            self.set_stat(dst)
 
 
 class BackupDirectory(BackupPath):
     """Information about a directory as well as operations"""
+
+    def __init__(self, *args, **kwargs):
+        BackupPath.__init__(self, *args, **kwargs)
+        self.st_size = 0    # file system may report != 0 but we're not interested in that
 
     def check_changes(self):
         """Directories are always created"""
@@ -158,34 +259,19 @@ class BackupDirectory(BackupPath):
     def create(self):
         """Directories are always created"""
         logging.debug('new directory %s' % (self.path,))
-        dst = self.join(self.backup.current_backup_path, self.path)
-        os.makedirs(dst)
-        #~ try:
-        shutil.copystat(self.path, dst)
-        #~ except WindowsError:
-            #~ # can't copy file access times on Windows
-            #~ pass
-        # XXX make read-only
+        os.makedirs(self.abs_path)
+        # directory needs to stay writeable as we need to add files
 
-    @property
-    def file_list_command(self):
-        return 'dir %s %s %s %.6f %s\n' % (
-                self.st_mode,
-                self.st_uid,
-                self.st_gid,
-                self.st_mtime,
-                self.escaped(self.path))
+    def secure(self):
+        """Secure backup against manipulation (make read-only)"""
+        self.set_stat(self.abs_path, make_readonly=True)
 
     def restore(self, dst):
         """Directories are always created"""
         logging.debug('new directory %s' % (self.path,))
         src = self.join(self.backup.current_backup_path, self.path)
         os.makedirs(dst)
-        #~ try:
-        shutil.copystat(src, dst)
-        #~ except WindowsError:
-            #~ # can't copy file access times on Windows
-            #~ pass
+        self.set_stat(dst)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -253,13 +339,16 @@ class Backup(object):
         self.base_name = None
 
     def set_target_path(self, path):
+        """Set the path to the backups (a directory)"""
         self.target_path = os.path.normpath(path)
 
     def find_backups(self):
+        """Return a list of names, of complete backups"""
         backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????'))
         return [name[len(self.target_path)+len(os.sep):] for name in backups]
 
     def find_incomplete_backups(self):
+        """Return a list of names, of incomplete backups"""
         backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????_incomplete'))
         return [name[len(self.target_path)+len(os.sep):] for name in backups]
 
@@ -270,6 +359,7 @@ class Backup(object):
             backups.sort()
             self.last_backup_path = os.path.join(self.target_path, backups[-1])
             logging.debug('Latest backup: %s' % (self.last_backup_path,))
+            return backups[-1]
         else:
             logging.info('No previous backup found')
 
@@ -295,82 +385,6 @@ class BackupControl(config_file_parser.ContolFileParser):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def main():
-    import sys
-    import optparse
-
-    parser = optparse.OptionParser(usage='%prog [options]')
-
-    parser.add_option("-c", "--control",
-        dest = "control",
-        help = "Load control file",
-        metavar = 'FILE',
-        default = [],
-        action = 'append'
-    )
-
-    parser.add_option("-f", "--force",
-        dest = "force",
-        help = "Enforce certain operations (e.g. making a backup even if there is no change)",
-        default = False,
-        action = 'store_true'
-    )
-
-    parser.add_option("--debug",
-        dest = "debug",
-        help = "Show technical details",
-        default = False,
-        action = 'store_true'
-    )
-    parser.add_option("--test-internals",
-        dest = "doctest",
-        help = "Run internal tests",
-        default = False,
-        action = 'store_true'
-    )
-    parser.add_option("-v", "--verbose",
-        dest = "verbosity",
-        help = "Increase level of messages",
-        default = 1,
-        action = 'count'
-    )
-    parser.add_option("-q", "--quiet",
-        dest = "verbosity",
-        help = "Disable messages (opposite of --verbose)",
-        const = 0,
-        action = 'store_const'
-    )
-    (options, args) = parser.parse_args(sys.argv[1:])
-
-
-    if options.verbosity > 1:
-        level = logging.DEBUG
-    elif options.verbosity:
-        level = logging.INFO
-    else:
-        level = logging.ERROR
-    logging.basicConfig(level=level)
-
-    if options.doctest:
-        import doctest
-        doctest.testmod()
-        sys.exit(0)
-
-    b = Backup()
-    c = BackupControl(b)
-    for filename in options.control:
-        try:
-            c.load_file(filename)
-        except IOError as e:
-            sys.stderr.write('Failed to load config: %s\n' % (e,))
-            sys.exit(1)
-
-    try:
-        b.create(options.force)
-    except BackupException as e:
-        sys.stderr.write('ERROR: %s\n' % (e))
-        sys.exit(1)
-
-
 if __name__ == '__main__':
-    main()
+    import doctest
+    doctest.testmod()
