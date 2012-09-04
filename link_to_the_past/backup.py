@@ -6,6 +6,7 @@ Link To The Past - a backup tool
 (C) 2012 cliechti@gmx.net
 """
 import time
+import sys
 import os
 import codecs
 import fnmatch
@@ -13,8 +14,10 @@ import stat
 import glob
 import shutil
 import logging
+import optparse
 
 import config_file_parser
+import profile
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EXPONENTS = ('', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
@@ -363,10 +366,72 @@ class Backup(object):
         else:
             logging.info('No previous backup found')
 
-    def load_configurations(self, file_list):
+    def load_configuration(self, filename):
+        logging.debug('Loading configuration %s' % (filename,))
         c = BackupControl(self)
-        for filename in file_list:
-            c.load_file(filename)
+        c.load_file(filename)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    def optparse_populate(self, parser):
+        """Adds common options to the parser"""
+
+        group = optparse.OptionGroup(parser, 'Messages')
+        group.add_option("--debug",
+            dest = "debug",
+            help = "show technical details",
+            default = False,
+            action = 'store_true'
+        )
+        group.add_option("-v", "--verbose",
+            dest = "verbosity",
+            help = "increase level of messages",
+            default = 1,
+            action = 'count'
+        )
+        group.add_option("-q", "--quiet",
+            dest = "verbosity",
+            help = "disable messages (opposite of --verbose)",
+            const = 0,
+            action = 'store_const'
+        )
+        parser.add_option_group(group)
+
+        group = optparse.OptionGroup(parser, 'Backup Configuration')
+        group.add_option("-c", "--control",
+            dest = "control",
+            help = "load control file",
+            metavar = 'FILE',
+            default = None,
+        )
+        group.add_option("-p", "--profile",
+            dest = "profile",
+            help = "load named profile",
+            metavar = 'NAME',
+            default = None,
+        )
+        parser.add_option_group(group)
+
+    def optparse_evaluate(self, options):
+        """Apply the effects of the common options"""
+        if options.verbosity > 1:
+            level = logging.DEBUG
+        elif options.verbosity:
+            level = logging.INFO
+        else:
+            level = logging.ERROR
+        logging.basicConfig(level=level)
+
+        if options.control is None:
+            if options.profile is not None:
+                options.control = profile.get_named_profile(options.profile)
+            else:
+                options.control = profile.get_default_profile()
+        try:
+            self.load_configuration(options.control)
+        except IOError as e:
+            sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
+            sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -382,6 +447,12 @@ class BackupControl(config_file_parser.ContolFileParser):
     #~ def word_include(self):
     def word_exclude(self):
         self.backup.source_locations[-1].excludes.append(ShellPattern(self.next_word()))
+
+    def word_load_config(self):
+        """include an other configuration file"""
+        c = self.__class__(self.backup)
+        path = self.next_word()
+        c.load_file(path)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

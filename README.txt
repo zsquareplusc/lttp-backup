@@ -53,13 +53,15 @@ general options:
     -v                  make outputs more verbose, can be given multiple times
     -q                  switch off messages
     --debug             for the programmer: shows tracebacks for failures
+    -c CONFIGURATION    load given configuration file
+    -p PROFILENAME      load given profile. profiles are configuration files
+                        in ``~/.link_to_the_past``.
 
 Create Backups
 --------------
 python -m link_to_the_past.create -c CONFIGURATION
 
 options:
-    -c CONFIGURATION    load given configuration file
     --full              copy all items, do not depend on last backup.
     -f, --force         create backup anyway, even if no files have changed
 
@@ -81,9 +83,9 @@ actions:
 
 Configuration file format
 =========================
-- line oriented
+- xxx   line oriented
 - # starts a comment, rest of line is ignored
-- \ continues a [virtual] line.
+- xxx  \ continues a [virtual] line.
 - whitespace separated (spaces in filenames must be escaped as \x20)
 
 Backup control files
@@ -95,6 +97,11 @@ Backup control files
 File Lists
 ----------
 - p1 <mode> <uid> <gid> <size> <atime> <mtime> <flags> <path>
+  - <flags> may be ´´-´´ if not supported
+  - directory or file etc is determined by <mode>
+  - all fields except <path> are decimal numbers, access and modification times
+    are floats the others integers.
+  - <path> must not contain spaces. escapes are allowed, including ´´\ ´´
 
 
 TODO and ideas
@@ -102,13 +109,18 @@ TODO and ideas
 - commands
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
+  - restore recursively, optionally redirect to new location
+  - cp -r
+  - autoclean -> remove incomplete backups
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
-- do not cross filesystems
+- do not cross filesystems, stat/st_dev
 - automatically load config file from target location
-- timeit
-- secure
 - timespec module, regexp
 - profile module
   - search ~/.lttp and ./lttp
+- config file_
+  - include PATH
+  - force-copy PATTERN
+- XXX check if fnmatch works with full paths

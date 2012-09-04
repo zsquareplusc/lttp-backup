@@ -82,65 +82,23 @@ def main():
     import optparse
     import sys
 
+    b = Restore()
     parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
+    b.optparse_populate(parser)
 
-    parser.add_option("-c", "--control",
-        dest = "control",
-        help = "Load control file",
-        metavar = 'FILE',
-        default = [],
-        action = 'append'
-    )
-
-    parser.add_option("-t", "--time-spec",
+    group = optparse.OptionGroup(parser, 'Backup Selection')
+    group.add_option("-t", "--time-spec",
         dest = "timespec",
         help = "load backup matching this time specification",
         default = None,
         action = 'store'
     )
+    parser.add_option_group(group)
 
-    #~ parser.add_option("-f", "--force",
-        #~ dest = "force",
-        #~ help = "Enforce certain operations (e.g. making a backup even if there is no change)",
-        #~ default = False,
-        #~ action = 'store_true'
-    #~ )
-
-    parser.add_option("--debug",
-        dest = "debug",
-        help = "Show technical details",
-        default = False,
-        action = 'store_true'
-    )
-    parser.add_option("-v", "--verbose",
-        dest = "verbosity",
-        help = "Increase level of messages",
-        default = 1,
-        action = 'count'
-    )
-    parser.add_option("-q", "--quiet",
-        dest = "verbosity",
-        help = "Disable messages (opposite of --verbose)",
-        const = 0,
-        action = 'store_const'
-    )
     (options, args) = parser.parse_args(sys.argv[1:])
 
+    b.optparse_evaluate(options)
 
-    if options.verbosity > 1:
-        level = logging.DEBUG
-    elif options.verbosity:
-        level = logging.INFO
-    else:
-        level = logging.ERROR
-    logging.basicConfig(level=level)
-
-    b = Restore()
-    try:
-        b.load_configurations(options.control)
-    except IOError as e:
-        sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
-        sys.exit(1)
 
     if not args:
         parser.error('Expected ACTION')

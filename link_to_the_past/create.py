@@ -67,7 +67,7 @@ class Create(Backup):
         self.bytes_required = 0
         self.files_changed = 0
         for item in self.saved_items:
-            if item.changed:
+            if item.changed and not isinstance(item, BackupDirectory):
                 self.bytes_required += item.size
                 self.files_changed += 1
 
@@ -123,75 +123,43 @@ def main():
     import sys
     import optparse
 
+    b = Create()
     parser = optparse.OptionParser(usage='%prog [options]')
+    b.optparse_populate(parser)
 
-    parser.add_option("-c", "--control",
-        dest = "control",
-        help = "Load control file",
-        metavar = 'FILE',
-        default = [],
-        action = 'append'
-    )
-
-    parser.add_option("-f", "--force",
+    group = optparse.OptionGroup(parser, 'Backup Options')
+    group.add_option("-f", "--force",
         dest = "force",
-        help = "Enforce certain operations (e.g. making a backup even if there is no change)",
+        help = "enforce certain operations (e.g. making a backup even if there are no changes)",
         default = False,
         action = 'store_true'
     )
-    parser.add_option("--full",
+    group.add_option("--full",
         dest = "full_backup",
         help = "always create copy (do not use previous backup to hard link)",
         default = False,
         action = 'store_true'
     )
+    parser.add_option_group(group)
 
-    parser.add_option("--debug",
-        dest = "debug",
-        help = "Show technical details",
-        default = False,
-        action = 'store_true'
-    )
+    (options, args) = parser.parse_args(sys.argv[1:])
+
+    b.optparse_evaluate(options)
+
     parser.add_option("--test-internals",
         dest = "doctest",
         help = "Run internal tests",
         default = False,
         action = 'store_true'
     )
-    parser.add_option("-v", "--verbose",
-        dest = "verbosity",
-        help = "Increase level of messages",
-        default = 1,
-        action = 'count'
-    )
-    parser.add_option("-q", "--quiet",
-        dest = "verbosity",
-        help = "Disable messages (opposite of --verbose)",
-        const = 0,
-        action = 'store_const'
-    )
     (options, args) = parser.parse_args(sys.argv[1:])
 
-
-    if options.verbosity > 1:
-        level = logging.DEBUG
-    elif options.verbosity:
-        level = logging.INFO
-    else:
-        level = logging.ERROR
-    logging.basicConfig(level=level)
 
     if options.doctest:
         import doctest
         doctest.testmod()
         sys.exit(0)
 
-    b = Create()
-    try:
-        b.load_configurations(options.control)
-    except IOError as e:
-        sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
-        sys.exit(1)
 
     t_start = time.time()
     try:
