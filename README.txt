@@ -78,7 +78,30 @@ actions:
     list                list all backups
     ls [PATTERN]        list files of backup, optionally filtered by PATTERN
     cp SRC DST          copy a single file from the backup (SRC) to DST
+    cp -r SRC DST       copy a directory recursively from the backup (SRC) to DST
     cat SRC             dump single file from the backup (SRC) to stdout
+    path                print the absolute path to the backup
+    rm SRC              remove a file from the backup
+    rm -r SRC           remove a directory and all its contents
+
+Copy
+----
+The ``cp`` action copies files or directories from the backup to the given
+destination. This is a convenient way to restore files in to a new location.
+
+.. warning:: Existing a file or directory with the same name will be overwritten!
+
+
+Remove
+------
+The ``rm`` action deletes files from the backup. Its purpose is to remove
+items that have been accidentally backed up (e.g. temporary files, caches,
+sensitive content etc.).
+
+.. warning:: This destroys the files in the backup, use with extreme care!
+
+.. note:: It usually makes sense to add an ``exclude`` rule to the
+          control file so that it is not included again in the next backup.
 
 
 Configuration file format
@@ -112,6 +135,8 @@ TODO and ideas
   - restore recursively, optionally redirect to new location
   - autoclean -> remove incomplete backups
   - compare -> compare stat values on one/all backups and original
+  - rm [-r] remove files from the backup
+  - purge remove complete backups
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.

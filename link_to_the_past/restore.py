@@ -3,7 +3,7 @@
 """\
 Link To The Past - a backup tool
 
-Restore and insprection tool.
+Restore and inspection tool.
 
 (C) 2012 cliechti@gmx.net
 """
@@ -14,6 +14,23 @@ import logging
 
 import config_file_parser
 from backup import *
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+class writeable(object):
+    """\
+    Context manager that chmod's the given path to make it writeable.
+    The original permissions are restored on exit.
+    """
+    def __init__(self, path):
+        self.path = path
+        self.permissions = os.lstat(path).st_mode
+
+    def __enter__(self):
+        os.chmod(self.path, self.permissions|stat.S_IWUSR)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        os.chmod(self.path, self.permissions)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -80,6 +97,63 @@ class Restore(Backup):
                 return item
         raise BackupException('not found: %r' % (path,))
 
+    def cp(self, source, destination, recursive=False):
+        """\
+        Copy files or directories from the backup (source) to given
+        destination. To copy directories, the recursive flag needs
+        to be set, it raises BackupException otherwise.
+        """
+        item = self.find_file(source)
+        if isinstance(item, BackupDirectory):
+            if recursive:
+                item.restore(destination, recursive=recursive)
+            else:
+                raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
+        else:
+            item.restore(destination)
+
+    def rm(self, source, recursive=False):
+        """\
+        Remove a file or a directory (if recursive flag is set).
+        This will ultimatively delete the file(s) from the backup!
+        """
+        item = self.find_file(source)
+        if isinstance(item, BackupDirectory):
+            if recursive:
+                # parent temporarily needs to be writebale to remove files
+                with writeable(item.parent.abs_path):
+                    # make all sub-entries writable
+                    for entry in item.flattened(include_self=True):
+                        # directories need to be writeable
+                        if isinstance(entry, BackupDirectory):
+                            entry.st_mode |= stat.S_IWUSR
+                            entry.set_stat(entry.abs_path)
+                    # then remove the complete sub-tree
+                    shutil.rmtree(item.abs_path)
+                item.parent.entries.remove(item)
+            else:
+                raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
+        else:
+            # parent temporarily needs to be writebale to remove files
+            with writeable(item.parent.abs_path):
+                #~ os.chmod(item.abs_path, stat.S_IWUSR|stat.S_IRUSR)
+                os.remove(item.abs_path)
+            item.parent.entries.remove(item)
+        self.write_file_list()
+
+    def write_file_list(self):
+        """Write a new version of the file list"""
+        the_copy = os.path.join(self.current_backup_path, 'file_list.new')
+        the_original = os.path.join(self.current_backup_path, 'file_list')
+        with codecs.open(the_copy, 'w', 'utf-8') as file_list:
+            for p in self.root.flattened():
+                file_list.write(p.file_list_command)
+        # make it read-only
+        os.chmod(the_copy, stat.S_IRUSR|stat.S_IRGRP)
+        # now remove old list and replace with new one
+        os.remove(the_original)
+        os.rename(the_copy, the_original)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def main():
@@ -127,7 +201,7 @@ def main():
             bad_backups = b.find_incomplete_backups()
             if bad_backups:
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
-        elif action == 'info':
+        elif action == 'path':
             b.find_backup_by_time(options.timespec)
             sys.stdout.write('%s\n' % (b.current_backup_path,))
         elif action == 'ls':
@@ -139,18 +213,21 @@ def main():
             for item in b.root.flattened():
                 if fnmatch.fnmatch(item.path, path):
                     sys.stdout.write('%s\n' % (item,))
+        elif action == 'rm':
+            if len(args) != 1:
+                parser.error('expected SRC')
+            b.find_backup_by_time(options.timespec)
+            b.find_file(args[0]) # XXX just test if it is there
+            sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
+            if raw_input('Continue? [y/N]').lower() != 'y':
+                sys.stderr.write('Aborted\n')
+                sys.exit(1)
+            b.rm(args[0], options.recursive)
         elif action == 'cp':
             if len(args) != 2:
                 parser.error('expected SRC DST')
             b.find_backup_by_time(options.timespec)
-            item = b.find_file(args[0])
-            if isinstance(item, BackupDirectory):
-                if options.recursive:
-                    item.restore(args[1], recursive=options.recursive)
-                else:
-                    raise BackupException('this is a directory, use -r to restore: %r' % (args[0]))
-            else:
-                item.restore(args[1])
+            b.cp(args[0], args[1], options.recursive)
         elif action == 'cat':
             if len(args) != 1:
                 parser.error('expected SRC')
