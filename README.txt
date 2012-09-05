@@ -110,8 +110,8 @@ TODO and ideas
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
   - restore recursively, optionally redirect to new location
-  - cp -r
   - autoclean -> remove incomplete backups
+  - compare -> compare stat values on one/all backups and original
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
@@ -123,4 +123,3 @@ TODO and ideas
 - config file_
   - include PATH
   - force-copy PATTERN
-- XXX check if fnmatch works with full paths

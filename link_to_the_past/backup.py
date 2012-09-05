@@ -52,6 +52,7 @@ class BackupException(Exception):
 
 def mode_to_chars(mode):
     """ls like mode as character sequence"""
+    if mode is None: return '----------'
     flags = []
     # file type
     if stat.S_ISDIR(mode):
@@ -101,12 +102,14 @@ def mode_to_chars(mode):
 
 class BackupPath(object):
     """Representing an object that is contained in the backup"""
-    __slots__ = ['path', 'backup', 'changed', 'st_size', 'st_mode', 'st_uid',
+    __slots__ = ['name', 'parent', '_path', 'backup', 'changed', 'st_size', 'st_mode', 'st_uid',
                  'st_gid', 'st_atime', 'st_mtime', 'st_flags']
 
-    def __init__(self, path=None):
-        self.path = path
-        self.backup = None
+    def __init__(self, name=None, backup=None, stat_now=None, parent=None):
+        self.name = name
+        self.parent = parent
+        self._path = None
+        self.backup = backup
         self.st_size = 0
         self.st_uid = None
         self.st_gid = None
@@ -114,27 +117,43 @@ class BackupPath(object):
         self.st_mtime = None
         self.st_atime = None
         self.st_flags = None
-        if path is not None:
-            stat_now = os.lstat(path)
-            self.st_size = stat_now.st_size
-            self.st_uid = stat_now.st_uid
-            self.st_gid = stat_now.st_gid
-            self.st_mode = stat_now.st_mode
-            self.st_mtime = stat_now.st_mtime
-            self.st_atime = stat_now.st_atime
-            if hasattr(stat_now, 'st_flags'):
-                self.st_flags = stat_now.st_flags
+        if stat_now is not None:
+            self.stat(stat_now)
         self.changed = False
-        # XXX track changes of contents and meta data separately?
+
+    def stat(self, stat_now=None):
+        if stat_now is None:
+            stat_now = os.lstat(self.path)
+        if stat.S_ISDIR(stat_now.st_mode):
+            self.st_size = 0
+        else:
+            self.st_size = stat_now.st_size
+        self.st_uid = stat_now.st_uid
+        self.st_gid = stat_now.st_gid
+        self.st_mode = stat_now.st_mode
+        self.st_mtime = stat_now.st_mtime
+        self.st_atime = stat_now.st_atime
+        if hasattr(stat_now, 'st_flags'):
+            self.st_flags = stat_now.st_flags
 
     @property
-    def size(self):
-        return self.st_size
+    def path(self):
+        """Return full path. Once calcualted, cache it"""
+        if self._path is None:
+            if self.parent is not None:
+                self._path = os.path.join(self.parent.path, self.name)
+            else:
+                self._path = self.name
+        return self._path
 
     @property
     def abs_path(self):
         """Return absolute and full path to file within the current backup"""
         return self.join(self.backup.current_backup_path, self.path)
+
+    @property
+    def size(self):
+        return self.st_size
 
     def __str__(self):
         return '%s %s %s %6s %s %s' % (
@@ -193,7 +212,6 @@ class BackupPath(object):
 
 class BackupFile(BackupPath):
     """Information about a file as well as operations"""
-    __slots__ = []
 
     def check_changes(self):
         """Compare the original file with the backup"""
@@ -250,10 +268,12 @@ class BackupFile(BackupPath):
 
 class BackupDirectory(BackupPath):
     """Information about a directory as well as operations"""
+    __slots__ = ['entries']
 
     def __init__(self, *args, **kwargs):
         BackupPath.__init__(self, *args, **kwargs)
         self.st_size = 0    # file system may report != 0 but we're not interested in that
+        self.entries = []
 
     def check_changes(self):
         """Directories are always created"""
@@ -269,12 +289,28 @@ class BackupDirectory(BackupPath):
         """Secure backup against manipulation (make read-only)"""
         self.set_stat(self.abs_path, make_readonly=True)
 
-    def restore(self, dst):
+    def restore(self, dst, recursive=False):
         """Directories are always created"""
         logging.debug('new directory %s' % (self.path,))
         src = self.join(self.backup.current_backup_path, self.path)
         os.makedirs(dst)
         self.set_stat(dst)
+        if recursive:
+            for entry in self.entries:
+                if isinstance(entry, BackupDirectory):
+                    entry.restore(os.path.join(dst, entry.name), recursive=True)
+                else:
+                    entry.restore(os.path.join(dst, entry.name))
+
+    def flattened(self, include_self=False):
+        """Generator yielding all directory entries recusrively"""
+        if include_self:
+            yield self
+        for entry in self.entries:
+            yield entry
+            if isinstance(entry, BackupDirectory):
+                for x in entry.flattened():
+                    yield x
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -293,7 +329,7 @@ class ShellPattern(object):
 class Location(object):
     """A location on the file system, user as source for backups"""
     def __init__(self, path):
-        self.path = os.path.normpath(path)
+        self.path = os.path.normpath(os.path.abspath(path))
         self.excludes = []
 
     def __repr__(self):
@@ -306,30 +342,48 @@ class Location(object):
                 #~ path = path[len(os.pathsep)+len(self.path):]
         #~ return path
 
-    def filtered(self, names):
-        for name in names:
-            included = True
-            for exclude in self.excludes:
-                if exclude.matches(name):
-                    included = False
-                    break
-            if included:
-                yield name
+    def is_included(self, name):
+        for exclude in self.excludes:
+            if exclude.matches(name):
+                return False
+        return True
 
-    def scan(self, backup):
+    def _scan(self, parent):
+        """scan recursively and handle excluded files on the fly"""
+        for name in os.listdir(parent.path):
+            path = os.path.join(parent.path, name)
+            if self.is_included(path):
+                stat_now = os.lstat(path)
+                mode = stat_now.st_mode
+                if stat.S_ISDIR(mode):
+                    d = BackupDirectory(name, backup=parent.backup, stat_now=stat_now, parent=parent)
+                    parent.entries.append(d)
+                    self._scan(d)
+                elif stat.S_ISREG(mode) or stat.S_ISLNK(mode):
+                    d = BackupFile(name, backup=parent.backup, stat_now=stat_now, parent=parent)
+                    parent.entries.append(d)
+                #~ elif stat.S_ISCHR(mode):
+                #~ elif stat.S_ISBLK(mode):
+                #~ elif stat.S_ISFIFO(mode):
+                #~ elif stat.S_ISSOCK(mode):
+                #~ else:
+                    # ignore everything else
+
+    def scan(self, root):
         """Find all files in the source directory"""
-        # scan and handle excluded files on the fly
-        backup.add(BackupDirectory(self.path))
-        for root, dirs, files in os.walk(self.path):
-            for name in self.filtered(files):
-                backup.add(BackupFile(os.path.join(root, name)))
-            # do not visit directories matching excludes
-            included_dirs = self.filtered(dirs)
-            for name in list(dirs): # iterate over copy
-                if name not in included_dirs:
-                    dirs.remove(name)
-                else:
-                    backup.add(BackupDirectory(os.path.join(root, name)))
+        path = os.path.abspath(self.path)
+        if os.path.isdir(path):
+            parents = path.split(os.sep)
+            del parents[0]  # remove empty root
+            parent = root
+            for name in parents:
+                entry = BackupDirectory(name, parent=parent, backup=root.backup)
+                if parent is not None: parent.entries.append(entry)
+                entry.stat()
+                parent = entry
+            self._scan(parent)
+        else:
+            raise BackupException('location is not a directory: %r' % (self.path,))
 
 
 class Backup(object):
@@ -457,5 +511,10 @@ class BackupControl(config_file_parser.ContolFileParser):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == '__main__':
+    #~ l = Location('.')
+    #~ l.excludes.append(ShellPattern('*/.bzr'))
+    #~ print '\n'.join('%s' %x for x in l.scan(None).flattened())
+
     import doctest
     doctest.testmod()
+

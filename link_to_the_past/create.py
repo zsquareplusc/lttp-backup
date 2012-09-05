@@ -23,15 +23,10 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.saved_items = []
+        self.root = BackupDirectory('/', backup=self)
         self.bytes_required = 0
         self.files_changed = 0
         self.file_list = None
-
-    def add(self, bpath):
-        """Add a file or directory to the items that are backed up"""
-        bpath.backup = self
-        self.saved_items.append(bpath)
 
     def prepare_target(self):
         """Create a new target folder"""
@@ -61,12 +56,12 @@ class Create(Backup):
                 item.changed = True
         else:
             logging.debug('Checking for changes')
-            for item in self.saved_items:
+            for item in self.root.flattened():
                 item.check_changes()
         # count bytes to backup
         self.bytes_required = 0
         self.files_changed = 0
-        for item in self.saved_items:
+        for item in self.root.flattened():
             if item.changed and not isinstance(item, BackupDirectory):
                 self.bytes_required += item.size
                 self.files_changed += 1
@@ -74,7 +69,7 @@ class Create(Backup):
     def scan_sources(self):
         """Find all files contained in the current backup"""
         for location in self.source_locations:
-            location.scan(self)
+            location.scan(self.root)
 
     def check_target(self):
         """Verify that the target is suitable for the backup"""
@@ -86,10 +81,10 @@ class Create(Backup):
                     nice_bytes(bytes_free),
                     nice_bytes(self.bytes_required),
                     ))
-        if t.f_favail < len(self.saved_items):
+        if t.f_favail < len(list(self.root.flattened())): # XXX list is bad
             raise BackupException('target file system will not allow to create that many files')
 
-    def create(self, force=False, full_backup=False):
+    def create(self, force=False, full_backup=False, dry_run=True):
         """Create a backup"""
         # find files to backup
         self.scan_sources()
@@ -102,20 +97,22 @@ class Create(Backup):
         logging.info('Need to copy %d bytes in %d files' % (self.bytes_required, self.files_changed))
         # check target
         self.check_target()
-        #~ for p in self.saved_items:
-            #~ print p
-        # backup files
-        self.prepare_target()
-        logging.debug('Copying/linking files')
-        for p in self.saved_items:
-            p.create()
-            self.file_list.write(p.file_list_command)
-        # secure directories (make then read-only too)
-        logging.debug('Making directories read-only')
-        for p in self.saved_items:
-            p.secure()
-        self.finalize_target()
-        logging.info('Created %s' % (self.base_name,))
+        if dry_run:
+            for entry in self.root.flattened(include_self=True):
+                print entry
+        else:
+            # backup files
+            self.prepare_target()
+            logging.debug('Copying/linking files')
+            for p in self.root.flattened():
+                p.create()
+                self.file_list.write(p.file_list_command)
+            # secure directories (make then read-only too)
+            logging.debug('Making directories read-only')
+            for p in self.root.flattened():
+                p.secure()
+            self.finalize_target()
+            logging.info('Created %s' % (self.base_name,))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -137,6 +134,12 @@ def main():
     group.add_option("--full",
         dest = "full_backup",
         help = "always create copy (do not use previous backup to hard link)",
+        default = False,
+        action = 'store_true'
+    )
+    group.add_option("--dry-run",
+        dest = "dry_run",
+        help = "do not actually create a backup, only scan the source",
         default = False,
         action = 'store_true'
     )
@@ -163,7 +166,7 @@ def main():
 
     t_start = time.time()
     try:
-        b.create(options.force, options.full_backup)
+        b.create(options.force, options.full_backup, options.dry_run)
     except BackupException as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)

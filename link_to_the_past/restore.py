@@ -21,12 +21,12 @@ class FileList(config_file_parser.ContolFileParser):
     """Parser for file lists"""
 
     def word_p1(self):
-        """Parse file info"""
+        """Parse file info and add it to the internal (file) tree"""
         st_mode = int(self.next_word())
         if stat.S_ISDIR(st_mode):
-            entry = BackupDirectory(None)
+            entry = BackupDirectory(None, backup=self.backup)
         else:
-            entry = BackupFile()
+            entry = BackupFile(backup=self.backup)
         entry.st_mode = st_mode
         entry.st_uid = int(self.next_word())
         entry.st_gid = int(self.next_word())
@@ -36,20 +36,24 @@ class FileList(config_file_parser.ContolFileParser):
         st_flags = self.next_word()
         if st_flags != '-':
             entry.st_flags = float(st_flags)
-        entry.path = entry.unescape(self.next_word())
-        self.backup.add(entry)
+        path = entry.unescape(self.next_word())
+        path_elements = path.split(os.sep)
+        entry.name = path_elements[-1]
+        parent = self.backup.root
+        for name in path_elements[1:-1]:
+            for p in parent.entries:
+                if p.name == name:
+                    parent = p
+                    break
+        entry.parent = parent
+        parent.entries.append(entry)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Restore(Backup):
     def __init__(self):
         Backup.__init__(self)
-        self.files_in_backup = []
-
-    def add(self, bpath):
-        """Add a file or directory to the items that are backed up"""
-        bpath.backup = self
-        self.files_in_backup.append(bpath)
+        self.root = BackupDirectory('/', backup=self)
 
     def load_file_list(self):
         logging.debug('Loading file list')
@@ -71,7 +75,7 @@ class Restore(Backup):
         self.load_file_list()
 
     def find_file(self, path):
-        for item in self.files_in_backup:
+        for item in self.root.flattened():
             if item.path == path:
                 return item
         raise BackupException('not found: %r' % (path,))
@@ -95,6 +99,15 @@ def main():
     )
     parser.add_option_group(group)
 
+    group = optparse.OptionGroup(parser, 'File Selection')
+    group.add_option("-r", "--recursive",
+        dest = "recursive",
+        help = "apply operation recursively to all subdirectories",
+        default = False,
+        action = 'store_true'
+    )
+    parser.add_option_group(group)
+
     (options, args) = parser.parse_args(sys.argv[1:])
 
     b.optparse_evaluate(options)
@@ -114,13 +127,16 @@ def main():
             bad_backups = b.find_incomplete_backups()
             if bad_backups:
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
+        elif action == 'info':
+            b.find_backup_by_time(options.timespec)
+            sys.stdout.write('%s\n' % (b.current_backup_path,))
         elif action == 'ls':
             b.find_backup_by_time(options.timespec)
             if args:
                 path = os.sep + args[0]
             else:
                 path = '*'
-            for item in b.files_in_backup:
+            for item in b.root.flattened():
                 if fnmatch.fnmatch(item.path, path):
                     sys.stdout.write('%s\n' % (item,))
         elif action == 'cp':
@@ -128,7 +144,13 @@ def main():
                 parser.error('expected SRC DST')
             b.find_backup_by_time(options.timespec)
             item = b.find_file(args[0])
-            item.restore(args[1])
+            if isinstance(item, BackupDirectory):
+                if options.recursive:
+                    item.restore(args[1], recursive=options.recursive)
+                else:
+                    raise BackupException('this is a directory, use -r to restore: %r' % (args[0]))
+            else:
+                item.restore(args[1])
         elif action == 'cat':
             if len(args) != 1:
                 parser.error('expected SRC')
