@@ -70,7 +70,7 @@ class FileList(config_file_parser.ContolFileParser):
 class Restore(Backup):
     def __init__(self):
         Backup.__init__(self)
-        self.root = BackupDirectory('/', backup=self)
+        self.root = BackupDirectory(u'/', backup=self)
 
     def load_file_list(self):
         logging.debug('Loading file list')
@@ -183,6 +183,10 @@ def main():
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args(sys.argv[1:])
+
+    # XXX this is not good if the console is NOT utf-8 capable...
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
 
     b.optparse_evaluate(options)
 

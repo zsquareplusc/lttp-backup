@@ -23,7 +23,7 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.root = BackupDirectory('/', backup=self)
+        self.root = BackupDirectory(u'/', backup=self)
         self.bytes_required = 0
         self.files_changed = 0
         self.file_list = None
@@ -94,12 +94,12 @@ class Create(Backup):
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
-        logging.info('Need to copy %d bytes in %d files' % (self.bytes_required, self.files_changed))
+        logging.info('Need to copy %s in %d files' % (nice_bytes(self.bytes_required), self.files_changed))
         # check target
         self.check_target()
         if dry_run:
             for entry in self.root.flattened(include_self=True):
-                print entry
+                sys.stdout.write('%s\n' % (entry,))
         else:
             # backup files
             self.prepare_target()
@@ -146,6 +146,10 @@ def main():
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args(sys.argv[1:])
+
+    # XXX this is not good if the console is NOT utf-8 capable...
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
 
     b.optparse_evaluate(options)
 

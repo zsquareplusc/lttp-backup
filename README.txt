@@ -135,7 +135,6 @@ TODO and ideas
   - restore recursively, optionally redirect to new location
   - autoclean -> remove incomplete backups
   - compare -> compare stat values on one/all backups and original
-  - rm [-r] remove files from the backup
   - purge remove complete backups
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
@@ -148,3 +147,4 @@ TODO and ideas
 - config file_
   - include PATH
   - force-copy PATTERN
+- how to handle filenames with encoding errors?

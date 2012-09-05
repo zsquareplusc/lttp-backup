@@ -348,17 +348,30 @@ class Location(object):
                 return False
         return True
 
-    def _scan(self, parent):
+    def _scan(self, parent, device):
         """scan recursively and handle excluded files on the fly"""
-        for name in os.listdir(parent.path):
+        logging.debug('scanning %r' % (parent.path,))
+        for name in os.listdir(unicode(parent.path)):
+            if isinstance(name, str):
+                logging.error('encoding error in filename, name in backup is altered!: %r' % (name,))
+                name = name.decode('utf-8', 'ignore')
             path = os.path.join(parent.path, name)
             if self.is_included(path):
-                stat_now = os.lstat(path)
+                try:
+                    stat_now = os.lstat(path)
+                except OSError: # permission error
+                    logging.error('access failed, ignoring: %s' % (path,))
+                    continue
+                # do not cross filesystem boundaries
+                if stat_now.st_dev != device:
+                    logging.warning('will not cross filesystems, ignore: %r' % (path,))
+                    continue
+                # store dirs and files
                 mode = stat_now.st_mode
                 if stat.S_ISDIR(mode):
                     d = BackupDirectory(name, backup=parent.backup, stat_now=stat_now, parent=parent)
                     parent.entries.append(d)
-                    self._scan(d)
+                    self._scan(d, device)
                 elif stat.S_ISREG(mode) or stat.S_ISLNK(mode):
                     d = BackupFile(name, backup=parent.backup, stat_now=stat_now, parent=parent)
                     parent.entries.append(d)
@@ -381,7 +394,7 @@ class Location(object):
                 if parent is not None: parent.entries.append(entry)
                 entry.stat()
                 parent = entry
-            self._scan(parent)
+            self._scan(parent, os.lstat(path).st_dev)
         else:
             raise BackupException('location is not a directory: %r' % (self.path,))
 
@@ -424,6 +437,8 @@ class Backup(object):
         logging.debug('Loading configuration %s' % (filename,))
         c = BackupControl(self)
         c.load_file(filename)
+        if self.target_path is None:
+            raise BackupException('Configuration misses TARGET directive')
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
