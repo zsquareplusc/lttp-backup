@@ -21,7 +21,7 @@ There is no need to use rsync to make local copies. Analyzing the files takes
 more time than simply copying it.
 
 
-The backup is always a simply copy of the files. This ensures that the backup
+The backup is always a simple copy of the files. This ensures that the backup
 can be used in any point in the future. Even if the backup program is lost or
 incompatible.
 
@@ -103,13 +103,27 @@ sensitive content etc.).
 .. note:: It usually makes sense to add an ``exclude`` rule to the
           control file so that it is not included again in the next backup.
 
+Profiles
+========
+A profile is the same as a configuration file but located in a sepcial place.
+The idea is to make it easier to work with multiple configurations.
+
+Without any -p or -c options, a default configuration is searched.
+1) A file named ``default.profile`` in the current directory
+2) A file named ``default.profile`` in the users ``.link_to_the_past``
+   directory
+
+Named profiles are loaded with the ``-p <name>`` option. A file 
+``<name>.profile`` is searched in the users ``.link_to_the_past``
+directory.
+
 
 Configuration file format
 =========================
-- xxx   line oriented
 - # starts a comment, rest of line is ignored
+- whitespace separated (spaces in filenames must be escaped as "\ ")
+- xxx   line oriented
 - xxx  \ continues a [virtual] line.
-- whitespace separated (spaces in filenames must be escaped as \x20)
 
 Backup control files
 --------------------
@@ -148,3 +162,7 @@ TODO and ideas
   - include PATH
   - force-copy PATTERN
 - how to handle filenames with encoding errors?
+
+- idea for exclude pattern: "nobackup" in filename
+- rangliste der grössten files bei backup, frage befor start
+- checksumme für verify? disk errors...

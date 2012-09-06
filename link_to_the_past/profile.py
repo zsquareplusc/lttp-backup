@@ -5,12 +5,12 @@ Link To The Past - a backup tool
 
 Profile management.
 
-A profile is a named configuration located in the directory
-~/.link_to_the_past/profiles where the filename is the profile name.
+A profile is a named configuration located in the directory ~/.link_to_the_past
+where the filename is the profile name with '.profile' appended.
 
 The default profile is:
-  - A file called ``link_to_the_past-configuration`` in the current directory
-  - ~/.link_to_the_past/profiles/default
+  - A file called ``default.profile`` in the current directory
+  - ~/.link_to_the_past/default.profile
 
 (in this order, first that exists is taken)
 
@@ -18,12 +18,12 @@ The default profile is:
 """
 import os
 
-PROFILE_DIRECTORY = os.path.expanduser('~/.link_to_the_past/profiles/')
-DEFAULT_CURRENT_DIR_NAME = 'link_to_the_past-configuration'
+PROFILE_DIRECTORY = os.path.expanduser('~/.link_to_the_past')
+DEFAULT_CURRENT_DIR_NAME = 'default.profile'
 DEFAULT_PROFILE_NAME = 'default'
 
 def get_named_profile(name):
-    path = os.path.join(PROFILE_DIRECTORY, name)
+    path = os.path.join(PROFILE_DIRECTORY, '%s.profile' % (name,))
     if os.path.exists(path):
         return path
     raise IOError('profile %r not found' % (name,))
