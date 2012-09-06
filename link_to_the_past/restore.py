@@ -104,6 +104,10 @@ class Restore(Backup):
         to be set, it raises BackupException otherwise.
         """
         item = self.find_file(source)
+        if destination == '..':
+            raise BackupException('can not resore to special name: %r' % (destination,))
+        if destination == '.':
+            destination = item.name
         if isinstance(item, BackupDirectory):
             if recursive:
                 item.restore(destination, recursive=recursive)

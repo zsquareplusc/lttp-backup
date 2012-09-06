@@ -178,18 +178,18 @@ class BackupPath(object):
         """Escape control non printable characters and the space"""
         return path.decode('unicode-escape').replace('\\ ', ' ')
 
-    def set_stat(self, path, make_readonly=False):
+    def make_read_only(self, path):
+        mode = self.st_mode
+        mode &= ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH)
+        os.chmod(path, mode)
+
+    def set_stat(self, path):
         """\
         Apply all stat info (mode bits, atime, mtime, flags) to path.
         Optionally make it read-only.
         """
-        if hasattr(os, 'utime'):
-            os.utime(path, (self.st_atime, self.st_mtime))
-        if hasattr(os, 'chmod'):
-            mode = self.st_mode
-            if make_readonly:
-                mode &= ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH)
-            os.chmod(path, mode)
+        os.utime(path, (self.st_atime, self.st_mtime))
+        os.chown(path, self.st_uid, self.st_gid)
         if hasattr(os, 'chflags'):
             try:
                 os.chflags(path, self.st_flags)
@@ -197,9 +197,11 @@ class BackupPath(object):
                 if (not hasattr(errno, 'EOPNOTSUPP') or
                     why.errno != errno.EOPNOTSUPP):
                     raise
+        os.chmod(path, self.st_mode)
+
     @property
     def file_list_command(self):
-        return 'p1 %s %s %s %s %.6f %.6f %s %s\n' % (
+        return 'p1 %s %s %s %s %.9f %.9f %s %s\n' % (
                 self.st_mode,
                 self.st_uid,
                 self.st_gid,
@@ -230,8 +232,7 @@ class BackupFile(BackupPath):
             os.symlink(linkto, dst)
         else:
             shutil.copy(self.path, dst)
-            self.set_stat(dst, make_readonly=True)
-        # XXX make read-only
+            self.make_read_only(dst)
 
     def link(self):
         """Create a hard link for the file"""
@@ -239,7 +240,8 @@ class BackupFile(BackupPath):
         src = self.join(self.backup.last_backup_path, self.path)
         dst = self.join(self.backup.current_backup_path, self.path)
         os.link(src, dst)
-        self.set_stat(dst, make_readonly=True)
+        if not os.path.islink(dst):
+            self.make_read_only(dst)
 
     def create(self):
         """Backup the file, either by hard linking or copying"""
@@ -287,20 +289,21 @@ class BackupDirectory(BackupPath):
 
     def secure(self):
         """Secure backup against manipulation (make read-only)"""
-        self.set_stat(self.abs_path, make_readonly=True)
+        self.make_read_only(self.abs_path)
 
     def restore(self, dst, recursive=False):
         """Directories are always created"""
         logging.debug('new directory %s' % (self.path,))
         src = self.join(self.backup.current_backup_path, self.path)
         os.makedirs(dst)
-        self.set_stat(dst)
         if recursive:
             for entry in self.entries:
                 if isinstance(entry, BackupDirectory):
                     entry.restore(os.path.join(dst, entry.name), recursive=True)
                 else:
                     entry.restore(os.path.join(dst, entry.name))
+        # set permission as last step in case a directory is made read-only
+        self.set_stat(dst)
 
     def flattened(self, include_self=False):
         """Generator yielding all directory entries recusrively"""
