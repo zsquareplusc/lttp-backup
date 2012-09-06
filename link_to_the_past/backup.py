@@ -179,14 +179,15 @@ class BackupPath(object):
         return path.decode('unicode-escape').replace('\\ ', ' ')
 
     def make_read_only(self, path):
-        mode = self.st_mode
-        mode &= ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH)
-        os.chmod(path, mode)
+        """use chmod to apply the modes with W bits cleared"""
+        os.chmod(path, self.st_mode & ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH))
 
     def set_stat(self, path):
         """\
         Apply all stat info (mode bits, atime, mtime, flags) to path.
         Optionally make it read-only.
+        Only useful when called on files but not on symlinks (it will follow
+        the link).
         """
         os.utime(path, (self.st_atime, self.st_mtime))
         os.chown(path, self.st_uid, self.st_gid)

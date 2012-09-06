@@ -104,10 +104,8 @@ class Restore(Backup):
         to be set, it raises BackupException otherwise.
         """
         item = self.find_file(source)
-        if destination == '..':
-            raise BackupException('can not resore to special name: %r' % (destination,))
-        if destination == '.':
-            destination = item.name
+        if os.path.isdir(destination):
+            destination = os.path.join(destination, item.name)
         if isinstance(item, BackupDirectory):
             if recursive:
                 item.restore(destination, recursive=recursive)
@@ -149,14 +147,15 @@ class Restore(Backup):
         """Write a new version of the file list"""
         the_copy = os.path.join(self.current_backup_path, 'file_list.new')
         the_original = os.path.join(self.current_backup_path, 'file_list')
-        with codecs.open(the_copy, 'w', 'utf-8') as file_list:
-            for p in self.root.flattened():
-                file_list.write(p.file_list_command)
-        # make it read-only
-        os.chmod(the_copy, stat.S_IRUSR|stat.S_IRGRP)
-        # now remove old list and replace with new one
-        os.remove(the_original)
-        os.rename(the_copy, the_original)
+        with writeable(self.current_backup_path):
+            with codecs.open(the_copy, 'w', 'utf-8') as file_list:
+                for p in self.root.flattened():
+                    file_list.write(p.file_list_command)
+            # make it read-only
+            os.chmod(the_copy, stat.S_IRUSR|stat.S_IRGRP)
+            # now remove old list and replace with new one
+            os.remove(the_original)
+            os.rename(the_copy, the_original)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

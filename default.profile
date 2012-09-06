@@ -1,2 +1,2 @@
-# default configuration, used to acces the test
+# default configuration, used to access the test
 load_config test/example_config

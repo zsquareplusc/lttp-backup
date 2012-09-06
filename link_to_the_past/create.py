@@ -42,8 +42,9 @@ class Create(Backup):
         # finish file list
         self.file_list.close()
         self.file_list = None
-        # make file list also read only
+        # make file list and then the backup itself also read only
         os.chmod(os.path.join(self.current_backup_path, 'file_list'), stat.S_IRUSR|stat.S_IRGRP)
+        os.chmod(self.current_backup_path, stat.S_IRUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IXGRP)
         # remove the '_incomplete' suffix
         os.rename(self.current_backup_path, self.base_name)
 

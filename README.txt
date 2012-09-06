@@ -91,6 +91,11 @@ Copy
 The ``cp`` action copies files or directories from the backup to the given
 destination. This is a convenient way to restore files in to a new location.
 
+If the destination is a directory, the name of the source is used as name for the
+file or directory that is being restored within given destination.
+
+``cp`` restores the original permissions of the file.
+
 .. warning:: Existing a file or directory with the same name will be overwritten!
 
 
