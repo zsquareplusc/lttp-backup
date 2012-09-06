@@ -18,6 +18,7 @@ import optparse
 
 import config_file_parser
 import profile
+import hashes
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EXPONENTS = ('', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
@@ -103,12 +104,13 @@ def mode_to_chars(mode):
 class BackupPath(object):
     """Representing an object that is contained in the backup"""
     __slots__ = ['name', 'parent', '_path', 'backup', 'changed', 'st_size', 'st_mode', 'st_uid',
-                 'st_gid', 'st_atime', 'st_mtime', 'st_flags']
+                 'st_gid', 'st_atime', 'st_mtime', 'st_flags', 'data_hash']
 
     def __init__(self, name=None, backup=None, stat_now=None, parent=None):
         self.name = name
         self.parent = parent
         self._path = None
+        self.data_hash = '-'
         self.backup = backup
         self.st_size = 0
         self.st_uid = None
@@ -202,7 +204,7 @@ class BackupPath(object):
 
     @property
     def file_list_command(self):
-        return 'p1 %s %s %s %s %.9f %.9f %s %s\n' % (
+        return 'p1 %s %s %s %s %.9f %.9f %s %s %s\n' % (
                 self.st_mode,
                 self.st_uid,
                 self.st_gid,
@@ -210,11 +212,14 @@ class BackupPath(object):
                 self.st_atime,
                 self.st_mtime,
                 self.st_flags if self.st_flags is not None else '-',
+                self.data_hash,
                 self.escaped(self.path))
 
 
 class BackupFile(BackupPath):
     """Information about a file as well as operations"""
+
+    BLOCKSIZE = 1024*256   # 256kB
 
     def check_changes(self):
         """Compare the original file with the backup"""
@@ -228,12 +233,22 @@ class BackupFile(BackupPath):
         """Create a copy of the file"""
         logging.debug('copying %s' % (self.escaped(self.path),))
         dst = self.join(self.backup.current_backup_path, self.path)
+        h = self.backup.hash_factory()
         if os.path.islink(self.path):
             linkto = os.readlink(self.path)
+            h.update(linkto)
             os.symlink(linkto, dst)
         else:
-            shutil.copy(self.path, dst)
+            with open(self.path, 'rb') as f_src:
+                with open(dst, 'wb') as f_dst:
+                    while True:
+                        block = f_src.read(self.BLOCKSIZE)
+                        if not block:
+                            break
+                        h.update(block)
+                        f_dst.write(block)
             self.make_read_only(dst)
+        self.data_hash = h.hexdigest()
 
     def link(self):
         """Create a hard link for the file"""
@@ -412,10 +427,15 @@ class Backup(object):
         self.current_backup_path = None
         self.last_backup_path = None
         self.base_name = None
+        self.hash_name = None
 
     def set_target_path(self, path):
         """Set the path to the backups (a directory)"""
         self.target_path = os.path.normpath(path)
+
+    def set_hash(self, name):
+        self.hash_factory = hashes.get_factory(name)
+        self.hash_name = name
 
     def find_backups(self):
         """Return a list of names, of complete backups"""
@@ -521,6 +541,12 @@ class BackupControl(config_file_parser.ContolFileParser):
     #~ def word_include(self):
     def word_exclude(self):
         self.backup.excludes.append(ShellPattern(self.next_word()))
+
+    def word_hash(self):
+        """Set the hash function"""
+        if self.backup.hash_name is not None:
+            logging.warn('HASH directive found multiple times')
+        self.backup.set_hash(self.next_word())
 
     def word_load_config(self):
         """include an other configuration file"""

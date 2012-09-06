@@ -129,23 +129,52 @@ Configuration file format
 =========================
 - # starts a comment, rest of line is ignored
 - whitespace separated (spaces in filenames must be escaped as "\ ")
+- the order of the commands is irrelevant
 - xxx   line oriented
 - xxx  \ continues a [virtual] line.
 
 Backup control files
 --------------------
-- include <path>
-- exclude <shell-pattern>
+``include <path>``
+    adds the path to the backup
+
+``exclude <shell-pattern>``
+    excludes files and directories matching the pattern
+
+``load_config <path>``
+    Load an other configuration file. This may be useful if a common excludes
+    list is (re-)used in different configuration files.
+
+``hash <name>``
+    Specify the hash function to use.
+
+    Available hash functions:
+    - CRC32 (non cryptographic)
+    - SHA-256
+    - SHA-512
+    - MD5 (collisions known)
+    Note that the cryptographic value is very limited as long as the file list
+    is stored alongside the backup. To secure against intentional changes, the
+    file list has to be stored at a different, save location or has to be
+    protected by other means (e.g. PGP/gpg)
+
 - xxx? ignore-mode, ignore-ids, always-copy <shell-pattern>
+
 
 File Lists
 ----------
-- p1 <mode> <uid> <gid> <size> <atime> <mtime> <flags> <path>
-  - <flags> may be ´´-´´ if not supported
-  - directory or file etc is determined by <mode>
-  - all fields except <path> are decimal numbers, access and modification times
-    are floats the others integers.
-  - <path> must not contain spaces. escapes are allowed, including ´´\ ´´
+``hash <name>``
+    Specify the hash function to use.
+    See also ``hash`` directive of the control file format above.
+
+``p1 <mode> <uid> <gid> <size> <atime> <mtime> <flags> <hash> <path>``
+    - <flags> may be ´´-´´ if not supported
+    - directory or file etc. is determined by <mode>
+    - all fields except <hash> and <path> are decimal numbers, access and
+      modification times are floats the others integers.
+    - <path> must not contain spaces. escapes are allowed, including ´´\ ´´
+    - <hash> is a string of printable characters, e.g. 123ABC4D.
+      See also ``hash`` directive above.
 
 
 TODO and ideas
@@ -157,6 +186,14 @@ TODO and ideas
   - autoclean -> remove incomplete backups
   - compare -> compare stat values on one/all backups and original
   - purge remove complete backups
+  - check -> check on of the backups if hashes are still matching
+  - verify -> check against source
+    - mtime same -> hash sum has to be the same
+    - mtime different -> nop, cant compare
+- compare module
+  - verify backup (hash)
+  - verify sources against backup (hash, added/removed)
+  - compare backups (hash, added/removed)
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.

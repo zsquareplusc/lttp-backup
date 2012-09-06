@@ -36,6 +36,8 @@ class Create(Backup):
         logging.debug('Creating backup in %s' % (self.current_backup_path,))
         os.mkdir(self.current_backup_path)
         self.file_list = codecs.open(os.path.join(self.current_backup_path, 'file_list'), 'w', 'utf-8')
+        if self.hash_name is not None:
+            self.file_list.write('hash %s\n' % (self.hash_name,))
 
     def finalize_target(self):
         """Complete the backup"""

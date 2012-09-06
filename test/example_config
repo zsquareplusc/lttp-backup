@@ -1,7 +1,8 @@
-# example config file
+# example configuration file
 
-# set the target
+# set the target and hash function
 target example_backups
+hash SHA-256
 
 # set the source and set up filters
 include example_source

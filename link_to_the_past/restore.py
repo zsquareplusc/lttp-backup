@@ -37,6 +37,12 @@ class writeable(object):
 class FileList(config_file_parser.ContolFileParser):
     """Parser for file lists"""
 
+    def word_hash(self):
+        """Set the hash function"""
+        if self.backup.hash_name is not None:
+            logging.warn('HASH directive found multiple times')
+        self.backup.set_hash(self.next_word())
+
     def word_p1(self):
         """Parse file info and add it to the internal (file) tree"""
         st_mode = int(self.next_word())
@@ -53,7 +59,9 @@ class FileList(config_file_parser.ContolFileParser):
         st_flags = self.next_word()
         if st_flags != '-':
             entry.st_flags = float(st_flags)
+        entry.data_hash = self.next_word()
         path = entry.unescape(self.next_word())
+
         path_elements = path.split(os.sep)
         entry.name = path_elements[-1]
         parent = self.backup.root
