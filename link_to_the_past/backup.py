@@ -342,8 +342,8 @@ class Location(object):
                 #~ path = path[len(os.pathsep)+len(self.path):]
         #~ return path
 
-    def is_included(self, name):
-        for exclude in self.excludes:
+    def is_included(self, backup, name):
+        for exclude in backup.excludes:
             if exclude.matches(name):
                 return False
         return True
@@ -356,7 +356,7 @@ class Location(object):
                 logging.error('encoding error in filename, name in backup is altered!: %r' % (name,))
                 name = name.decode('utf-8', 'ignore')
             path = os.path.join(parent.path, name)
-            if self.is_included(path):
+            if self.is_included(parent.backup, path):
                 try:
                     stat_now = os.lstat(path)
                 except OSError: # permission error
@@ -402,7 +402,8 @@ class Location(object):
 class Backup(object):
     """Common backup description."""
     def __init__(self):
-        self.source_locations = []
+        self.includes = []
+        self.excludes = []
         self.target_path = None
         self.current_backup_path = None
         self.last_backup_path = None
@@ -510,12 +511,12 @@ class BackupControl(config_file_parser.ContolFileParser):
     def word_target(self):
         self.backup.set_target_path(self.path(self.next_word()))
 
-    def word_location(self):
-        self.backup.source_locations.append(Location(self.path(self.next_word())))
+    def word_include(self):
+        self.backup.includes.append(Location(self.path(self.next_word())))
 
     #~ def word_include(self):
     def word_exclude(self):
-        self.backup.source_locations[-1].excludes.append(ShellPattern(self.next_word()))
+        self.backup.excludes.append(ShellPattern(self.next_word()))
 
     def word_load_config(self):
         """include an other configuration file"""

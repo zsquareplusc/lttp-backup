@@ -4,7 +4,7 @@
 target example_backups
 
 # set the source and set up filters
-location example_source
+include example_source
 exclude *.bak
 exclude *~
 exclude */.gvfs

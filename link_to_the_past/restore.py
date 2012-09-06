@@ -242,6 +242,9 @@ def main():
                 sys.stdout.write(f.read(2048))
         else:
             parser.error('unknown ACTION: %r' % (action,))
+    except KeyboardInterrupt:
+        sys.stderr.write('\nAborted on user request.\n')
+        sys.exit(1)
     except BackupException as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)

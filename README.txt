@@ -28,7 +28,9 @@ incompatible.
 
 - Changed files are copied entirely.
 - Special files (devices) are not backed up.
-- XXX do not cross file systems
+- Filesystems are not crosssed file. Use ``include`` directive in
+  configuration file to manually include the path or an ``exclude`` directive
+  to suppress the warning.
 - Files are checked by modification date and size.
 - Backups are timestamped, you can not create more than one backup per second
   :-)
@@ -153,13 +155,8 @@ TODO and ideas
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
-- do not cross filesystems, stat/st_dev
-- automatically load config file from target location
 - timespec module, regexp
-- profile module
-  - search ~/.lttp and ./lttp
 - config file_
-  - include PATH
   - force-copy PATTERN
 - how to handle filenames with encoding errors?
 

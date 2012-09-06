@@ -68,7 +68,7 @@ class Create(Backup):
 
     def scan_sources(self):
         """Find all files contained in the current backup"""
-        for location in self.source_locations:
+        for location in self.includes:
             location.scan(self.root)
 
     def check_target(self):
@@ -82,7 +82,7 @@ class Create(Backup):
                     nice_bytes(self.bytes_required),
                     ))
         if t.f_favail < len(list(self.root.flattened())): # XXX list is bad
-            raise BackupException('target file system will not allow to create that many files')
+            raise BackupException('target file system will not allow to create that many files and directories')
 
     def create(self, force=False, full_backup=False, dry_run=True):
         """Create a backup"""
@@ -98,8 +98,10 @@ class Create(Backup):
         # check target
         self.check_target()
         if dry_run:
-            for entry in self.root.flattened(include_self=True):
-                sys.stdout.write('%s\n' % (entry,))
+            for entry in self.root.flattened():
+                sys.stdout.write('%s %s\n' % (
+                        'C' if entry.changed else 'L',
+                        entry,))
         else:
             # backup files
             self.prepare_target()
@@ -171,6 +173,9 @@ def main():
     t_start = time.time()
     try:
         b.create(options.force, options.full_backup, options.dry_run)
+    except KeyboardInterrupt:
+        sys.stderr.write('\nAborted on user request.\n')
+        sys.exit(1)
     except BackupException as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)
