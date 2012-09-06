@@ -283,6 +283,45 @@ class BackupFile(BackupPath):
             shutil.copy(src, dst)
             self.set_stat(dst)
 
+    def verify_hash(self, path):
+        """\
+        Compare given path by calculating the hash over the data.
+        Returns true when the calculated hash matches the stored one.
+        """
+        h = self.backup.hash_factory()
+        if os.path.islink(path):
+            h.update(os.readlink(path))
+        else:
+            with open(path, 'rb') as f_src:
+                while True:
+                    block = f_src.read(self.BLOCKSIZE)
+                    if not block:
+                        break
+                    h.update(block)
+        return self.data_hash == h.hexdigest()
+
+    def verify_stat(self, path):
+        """\
+        Compare given path's metadata with the stored one. Return true if they
+        are the same.
+        Note: st_atime is not checked.
+        """
+        stat_now = os.lstat(path)
+        if stat.S_ISDIR(stat_now.st_mode):
+            st_size = 0
+        else:
+            st_size = stat_now.st_size
+        if hasattr(stat_now, 'st_flags'):
+            st_flags = stat_now.st_flags
+        else:
+            st_flags = None
+        return (self.st_uid == stat_now.st_uid and
+                self.st_gid == stat_now.st_gid and
+                self.st_mode == stat_now.st_mode and
+                self.st_size == st_size and
+                abs(self.st_mtime - stat_now.st_mtime) <= 0.00001 and # 10us; as it is a float...
+                self.st_flags == st_flags)
+
 
 class BackupDirectory(BackupPath):
     """Information about a directory as well as operations"""

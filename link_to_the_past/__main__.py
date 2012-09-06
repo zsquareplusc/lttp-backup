@@ -10,14 +10,18 @@ Command line front-end.
 
 import sys
 
-from link_to_the_past import create, restore
+from link_to_the_past import create, restore, edit, compare
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == 'create':
-        del sys.argv[1]
-        create.main()
-    else:
-        restore.main()
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'create':
+            del sys.argv[1]
+            return create.main()
+        elif sys.argv[1] == 'rm':
+            return edit.main()
+        elif sys.argv[1] == 'verify':
+            return compare.main()
+    return restore.main()
 
 
 if __name__ == '__main__':

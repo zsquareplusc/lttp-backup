@@ -122,35 +122,6 @@ class Restore(Backup):
         else:
             item.restore(destination)
 
-    def rm(self, source, recursive=False):
-        """\
-        Remove a file or a directory (if recursive flag is set).
-        This will ultimatively delete the file(s) from the backup!
-        """
-        item = self.find_file(source)
-        if isinstance(item, BackupDirectory):
-            if recursive:
-                # parent temporarily needs to be writebale to remove files
-                with writeable(item.parent.abs_path):
-                    # make all sub-entries writable
-                    for entry in item.flattened(include_self=True):
-                        # directories need to be writeable
-                        if isinstance(entry, BackupDirectory):
-                            entry.st_mode |= stat.S_IWUSR
-                            entry.set_stat(entry.abs_path)
-                    # then remove the complete sub-tree
-                    shutil.rmtree(item.abs_path)
-                item.parent.entries.remove(item)
-            else:
-                raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
-        else:
-            # parent temporarily needs to be writebale to remove files
-            with writeable(item.parent.abs_path):
-                #~ os.chmod(item.abs_path, stat.S_IWUSR|stat.S_IRUSR)
-                os.remove(item.abs_path)
-            item.parent.entries.remove(item)
-        self.write_file_list()
-
     def write_file_list(self):
         """Write a new version of the file list"""
         the_copy = os.path.join(self.current_backup_path, 'file_list.new')
@@ -165,6 +136,22 @@ class Restore(Backup):
             os.remove(the_original)
             os.rename(the_copy, the_original)
 
+
+    def optparse_populate(self, parser):
+        Backup.optparse_populate(self, parser)
+        group = optparse.OptionGroup(parser, 'Backup Selection')
+        group.add_option("-t", "--time-spec",
+            dest = "timespec",
+            help = "load backup matching this time specification",
+            default = None,
+            action = 'store'
+        )
+        parser.add_option_group(group)
+
+    def optparse_evaluate(self, options):
+        Backup.optparse_evaluate(self, options)
+        self.find_backup_by_time(options.timespec)
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def main():
@@ -174,15 +161,6 @@ def main():
     b = Restore()
     parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
     b.optparse_populate(parser)
-
-    group = optparse.OptionGroup(parser, 'Backup Selection')
-    group.add_option("-t", "--time-spec",
-        dest = "timespec",
-        help = "load backup matching this time specification",
-        default = None,
-        action = 'store'
-    )
-    parser.add_option_group(group)
 
     group = optparse.OptionGroup(parser, 'File Selection')
     group.add_option("-r", "--recursive",
@@ -217,10 +195,8 @@ def main():
             if bad_backups:
                 logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
         elif action == 'path':
-            b.find_backup_by_time(options.timespec)
             sys.stdout.write('%s\n' % (b.current_backup_path,))
         elif action == 'ls':
-            b.find_backup_by_time(options.timespec)
             if args:
                 path = os.sep + args[0]
             else:
@@ -228,25 +204,13 @@ def main():
             for item in b.root.flattened():
                 if fnmatch.fnmatch(item.path, path):
                     sys.stdout.write('%s\n' % (item,))
-        elif action == 'rm':
-            if len(args) != 1:
-                parser.error('expected SRC')
-            b.find_backup_by_time(options.timespec)
-            b.find_file(args[0]) # XXX just test if it is there
-            sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
-            if raw_input('Continue? [y/N]').lower() != 'y':
-                sys.stderr.write('Aborted\n')
-                sys.exit(1)
-            b.rm(args[0], options.recursive)
         elif action == 'cp':
             if len(args) != 2:
                 parser.error('expected SRC DST')
-            b.find_backup_by_time(options.timespec)
             b.cp(args[0], args[1], options.recursive)
         elif action == 'cat':
             if len(args) != 1:
                 parser.error('expected SRC')
-            b.find_backup_by_time(options.timespec)
             item = b.find_file(args[0])
             # XXX set stdout in binary mode
             with open(item.abs_path, 'rb') as f:
