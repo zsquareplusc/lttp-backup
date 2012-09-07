@@ -105,7 +105,7 @@ class Restore(Backup):
         self.load_file_list()
 
     def find_file(self, path):
-        for item in self.root.flattened():
+        for item in self.root.flattened(include_self=True):
             if item.path == path:
                 return item
         raise BackupException('not found: %r' % (path,))

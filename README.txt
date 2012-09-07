@@ -208,3 +208,9 @@ TODO and ideas
 - idea for exclude pattern: "nobackup" in filename
 - rangliste der grössten files bei backup, frage befor start
 - checksumme für verify? disk errors...
+
+check_changes must use file list as lutime is not available and links will
+have wrong mtime
+
+smart compare of two trees
+- add, remove, change, same

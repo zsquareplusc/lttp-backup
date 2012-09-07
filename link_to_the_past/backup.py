@@ -244,6 +244,7 @@ class BackupFile(BackupPath):
             h.update(linkto)
             os.symlink(linkto, dst)
             #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
+            os.system('touch --no-dereference -r "%s" "%s"' % (self.escaped(self.path), self.escaped(dst)))
         else:
             with open(self.path, 'rb') as f_src:
                 with open(dst, 'wb') as f_dst:
@@ -369,7 +370,7 @@ class BackupDirectory(BackupPath):
         self.set_stat(dst)
 
     def flattened(self, include_self=False):
-        """Generator yielding all directory entries recusrively"""
+        """Generator yielding all directories and files recusrively"""
         if include_self:
             yield self
         for entry in self.entries:
@@ -377,6 +378,37 @@ class BackupDirectory(BackupPath):
             if isinstance(entry, BackupDirectory):
                 for x in entry.flattened():
                     yield x
+
+    #~ def files(self):
+        #~ """Iterate over files in a directory, subdirectories are ignored"""
+        #~ for entry in self.entries:
+            #~ if isinstance(entry, BackupFile):
+                #~ yield entry
+
+    def walk(self):
+        """Generator yielding all directories recusrively"""
+        yield self
+        for entry in self.entries:
+            if isinstance(entry, BackupDirectory):
+                for x in entry.walk():
+                    yield x
+
+    def __getitem__(self, name):
+        if name == self.name:
+            return self
+        if name.startswith(os.sep):
+            name = name[len(os.sep):]
+
+        if os.sep in name:
+            head, tail = name.split(os.sep, 1)
+            for entry in self.entries:
+                if entry.name == head:
+                    return entry[tail]  # XXX only if dir
+        else:
+            for entry in self.entries:
+                if entry.name == name:
+                    return entry
+        raise KeyError('no such directory: %s' % (name,))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
