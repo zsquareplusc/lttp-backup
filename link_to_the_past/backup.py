@@ -121,7 +121,7 @@ class BackupPath(object):
         self.st_flags = None
         if stat_now is not None:
             self.stat(stat_now)
-        self.changed = False
+        self.changed = True
 
     def stat(self, stat_now=None):
         if stat_now is None:
@@ -158,7 +158,7 @@ class BackupPath(object):
         return self.st_size
 
     def __str__(self):
-        return '%s %s %s %6s %s %s' % (
+        return '%s %4s %4s %6s %s %s' % (
                 mode_to_chars(self.st_mode),
                 self.st_uid,
                 self.st_gid,
@@ -223,11 +223,16 @@ class BackupFile(BackupPath):
 
     def check_changes(self):
         """Compare the original file with the backup"""
-        prev = os.lstat(os.path.join(self.backup.last_backup_path, self.path))
-        # ignore changes in meta data. just look at the contents
-        if (self.st_size != prev.st_size or
-                abs(self.st_mtime - prev.st_mtime) > 0.00001): # 10us; as it is a float...
+        try:
+            prev = os.lstat(self.join(self.backup.last_backup_path, self.path))
+        except OSError:
+            # file does not exist in backup
             self.changed = True
+        else:
+            # ignore changes in other meta data. just look at the size and mtime
+            if (self.st_size == prev.st_size and
+                    abs(self.st_mtime - prev.st_mtime) <= 0.00001): # 10us; as it is a float...
+                self.changed = False
 
     def copy(self):
         """Create a copy of the file"""
@@ -238,6 +243,7 @@ class BackupFile(BackupPath):
             linkto = os.readlink(self.path)
             h.update(linkto)
             os.symlink(linkto, dst)
+            #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
         else:
             with open(self.path, 'rb') as f_src:
                 with open(dst, 'wb') as f_dst:
@@ -247,6 +253,7 @@ class BackupFile(BackupPath):
                             break
                         h.update(block)
                         f_dst.write(block)
+            os.utime(dst, (self.st_atime, self.st_mtime))
             self.make_read_only(dst)
         self.data_hash = h.hexdigest()
 
@@ -340,6 +347,7 @@ class BackupDirectory(BackupPath):
         """Directories are always created"""
         logging.debug('new directory %s' % (self.path,))
         os.makedirs(self.abs_path)
+        os.utime(self.abs_path, (self.st_atime, self.st_mtime))
         # directory needs to stay writeable as we need to add files
 
     def secure(self):

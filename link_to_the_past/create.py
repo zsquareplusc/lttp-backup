@@ -55,13 +55,11 @@ class Create(Backup):
         # first (or forced) -> full copy
         if self.last_backup_path is None:
             logging.info('No previous backup, create full copy of all items')
-            for item in self.root.flattened():
-                item.changed = True
         else:
             logging.debug('Checking for changes')
             for item in self.root.flattened():
                 item.check_changes()
-        # count bytes to backup
+        # count bytes and files to backup
         self.bytes_required = 0
         self.files_changed = 0
         for item in self.root.flattened():

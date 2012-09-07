@@ -37,6 +37,11 @@ class writeable(object):
 class FileList(config_file_parser.ContolFileParser):
     """Parser for file lists"""
 
+    def __init__(self, *args, **kwargs):
+        config_file_parser.ContolFileParser.__init__(self, *args, **kwargs)
+        self.backup.hash_name = None
+        self.backup.hash_factory = None
+
     def word_hash(self):
         """Set the hash function"""
         if self.backup.hash_name is not None:
