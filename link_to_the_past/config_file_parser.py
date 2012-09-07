@@ -44,7 +44,7 @@ def words_in_file(filename, fileobj=None, include_newline=False):
         # - remove comment
         # - remove whitespace and beginning and end
         # - split on whitespace
-        for word in m_comment.sub('', line.replace('\ ', '\x20')).split():
+        for word in m_comment.sub('', line.replace('\ ', '\\x20')).split():
             yield Word(word, filename, n+1, line)
         if include_newline:
             yield Word('\n', filename, n+1, line)
