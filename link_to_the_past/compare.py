@@ -11,6 +11,7 @@ Compare backups and sources.
 from restore import *
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IMPLEMENTED_ACTIONS = ['verify']
 
 def main():
     import optparse

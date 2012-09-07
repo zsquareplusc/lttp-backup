@@ -51,6 +51,7 @@ class EditBackup(Restore):
         self.write_file_list()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IMPLEMENTED_ACTIONS = ['rm']
 
 def main():
     import optparse

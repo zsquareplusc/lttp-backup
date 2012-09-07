@@ -17,11 +17,15 @@ def main():
         if sys.argv[1] == 'create':
             del sys.argv[1]
             return create.main()
-        elif sys.argv[1] == 'rm':
+        elif sys.argv[1] in edit.IMPLEMENTED_ACTIONS:
             return edit.main()
-        elif sys.argv[1] == 'verify':
+        elif sys.argv[1] in compare.IMPLEMENTED_ACTIONS:
             return compare.main()
-    return restore.main()
+        elif sys.argv[1] in restore.IMPLEMENTED_ACTIONS:
+            return restore.main()
+    sys.stderr.write('Usage: %s [options] ACTION [...]\n\n' % (sys.argv[0],))
+    sys.stderr.write('%s: error: missing ACTION\n' % (sys.argv[0],))
+    sys.exit(1)
 
 
 if __name__ == '__main__':

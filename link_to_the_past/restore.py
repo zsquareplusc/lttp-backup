@@ -153,6 +153,7 @@ class Restore(Backup):
         self.find_backup_by_time(options.timespec)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IMPLEMENTED_ACTIONS = ['list', 'path', 'ls', 'cp', 'cat']
 
 def main():
     import optparse
