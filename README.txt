@@ -85,6 +85,12 @@ actions:
     path                print the absolute path to the backup
     rm SRC              remove a file from the backup
     rm -r SRC           remove a directory and all its contents
+    verify [SRC]        compare files in the source location against the
+                        backup (hash)
+    integrity           check all files within the backup for changes (compare
+                        hashes)
+    compare [TIMESPEC]  compare two backups and list files
+                        added/changed/removed
 
 Copy
 ----
@@ -146,17 +152,22 @@ Backup control files
     list is (re-)used in different configuration files.
 
 ``hash <name>``
-    Specify the hash function to use.
+    Specify the hash function to use. No hashing will be performed if the
+    directive is absent.
 
     Available hash functions:
     - CRC32 (non-cryptographic)
     - SHA-256
     - SHA-512
     - MD5 (collisions known)
+
     Note that the cryptographic value is very limited as long as the file list
     is stored alongside the backup. To secure against intentional changes, the
     file list has to be stored at a different, save location or has to be
-    protected by other means (e.g. PGP/gpg)
+    protected by other means (e.g. PGP/gpg).
+
+    CRC32 yields the shortest hash string which means the file list stays
+    smaller compared to the other algorithms.
 
 - xxx? ignore-mode, ignore-ids, always-copy <shell-pattern>
 
@@ -186,10 +197,6 @@ TODO and ideas
   - autoclean -> remove incomplete backups
   - compare -> compare stat values on one/all backups and original
   - purge remove complete backups
-  - check -> check on of the backups if hashes are still matching
-- compare module
-  - verify backup (hash)
-  - compare backups (hash, added/removed)
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
