@@ -149,7 +149,7 @@ Backup control files
     Specify the hash function to use.
 
     Available hash functions:
-    - CRC32 (non cryptographic)
+    - CRC32 (non-cryptographic)
     - SHA-256
     - SHA-512
     - MD5 (collisions known)
@@ -187,12 +187,8 @@ TODO and ideas
   - compare -> compare stat values on one/all backups and original
   - purge remove complete backups
   - check -> check on of the backups if hashes are still matching
-  - verify -> check against source
-    - mtime same -> hash sum has to be the same
-    - mtime different -> nop, cant compare
 - compare module
   - verify backup (hash)
-  - verify sources against backup (hash, added/removed)
   - compare backups (hash, added/removed)
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
