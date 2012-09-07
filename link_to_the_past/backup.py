@@ -516,6 +516,11 @@ class Backup(object):
         self.hash_factory = hashes.get_factory(name)
         self.hash_name = name
 
+    def scan_sources(self):
+        """Find all files contained in the current backup"""
+        for location in self.includes:
+            location.scan(self.root)
+
     def find_backups(self):
         """Return a list of names, of complete backups"""
         backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????'))

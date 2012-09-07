@@ -76,14 +76,19 @@ def main():
             # XXX "now" as word to scan sources instead of laoding a backup
             other_backup = Restore()
             other_backup.target_path = b.target_path
-            other_backup.find_backup_by_time(args[0])
+            other_backup.includes = b.includes
+            other_backup.excludes = b.excludes
+            if args[0] == 'now':
+                other_backup.scan_sources()
+            else:
+                other_backup.find_backup_by_time(args[0])
             if b.current_backup_path == other_backup.current_backup_path:
                 parser.error('Both TIMESPECs point to the same backup')
             for src_dir in b.root.walk():
                 try:
                     other_entry = other_backup.root[src_dir.path]
                 except KeyError:
-                    status = 'A'
+                    status = 'D'
                     sys.stdout.write('%s %s\n' % (status, src_dir.path))
                     if isinstance(src_dir, BackupDirectory):
                         for item in src_dir.flattened():
@@ -100,10 +105,10 @@ def main():
                                 ref.remove(ref_entry)
                                 break
                         else:
-                            status = 'A'
+                            status = 'D'
                         sys.stdout.write('%s %s\n' % (status, entry.path))
                     # print files in ref but not in source
-                    status = 'D'
+                    status = 'A'
                     for ref_entry in ref:
                         sys.stdout.write('%s %s\n' % (status, ref_entry.path))
                         if isinstance(ref_entry, BackupDirectory):

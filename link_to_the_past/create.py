@@ -67,11 +67,6 @@ class Create(Backup):
                 self.bytes_required += item.size
                 self.files_changed += 1
 
-    def scan_sources(self):
-        """Find all files contained in the current backup"""
-        for location in self.includes:
-            location.scan(self.root)
-
     def check_target(self):
         """Verify that the target is suitable for the backup"""
         # check target path
