@@ -16,6 +16,8 @@ import logging
 
 import config_file_parser
 from backup import *
+import filelist
+import indexer
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -23,10 +25,11 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.root = FileList()
+        self.source_root = filelist.FileList()
+        self.backup_root = filelist.FileList()
         self.bytes_required = 0
         self.files_changed = 0
-        self.indexer = indexer.Indexer()
+        self.indexer = indexer.Indexer(self.source_root)
 
     def prepare_target(self):
         """Create a new target folder"""
@@ -35,11 +38,13 @@ class Create(Backup):
         self.current_backup_path = self.base_name + '_incomplete'
         logging.debug('Creating backup in %s' % (self.current_backup_path,))
         os.mkdir(self.current_backup_path)
+        self.source_root.root = self.current_backup_path
+        self.source_root.set_hash(self.hash_name)
 
     def finalize_target(self):
         """Complete the backup"""
         # write file list
-        self.root.save(os.path.join(self.current_backup_path, 'file_list'))
+        self.source_root.save(os.path.join(self.current_backup_path, 'file_list'))
         # make backup itself read-only
         os.chmod(self.current_backup_path, stat.S_IRUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IXGRP)
         # remove the '_incomplete' suffix
@@ -52,15 +57,15 @@ class Create(Backup):
             logging.info('No previous backup, create full copy of all items')
         else:
             logging.debug('Checking for changes')
-            for item in self.root.flattened():
+            for item in self.source_root.flattened():
                 item.check_changes()
         # count bytes and files to backup
         self.bytes_required = 0
         self.files_changed = 0
-        for item in self.root.flattened():
-            if item.changed and not isinstance(item, BackupDirectory):
-                self.bytes_required += item.size
-                self.files_changed += 1
+        for item in self.source_root.flattened():
+            if item.changed and not isinstance(item, filelist.BackupDirectory):
+                self.bytes_required += item.stat.size
+                self.files_changed += 1 # XXX count dirs too?
 
     def check_target(self):
         """Verify that the target is suitable for the backup"""
@@ -69,27 +74,27 @@ class Create(Backup):
         bytes_free = t.f_bsize * t.f_bavail
         if bytes_free < self.bytes_required:
             raise BackupException('not enough free space on target %s available but %s required' % (
-                    nice_bytes(bytes_free),
-                    nice_bytes(self.bytes_required),
+                    filelist.nice_bytes(bytes_free),
+                    filelist.nice_bytes(self.bytes_required),
                     ))
-        if t.f_favail < len(list(self.root.flattened())): # XXX list is bad
+        if t.f_favail < len(list(self.source_root.flattened())): # XXX call to "list" is bad
             raise BackupException('target file system will not allow to create that many files and directories')
 
     def create(self, force=False, full_backup=False, dry_run=True):
         """Create a backup"""
         # find files to backup
-        self.scan_sources()
+        self.indexer.scan()
         # find latest backup to work incrementally
         if not full_backup:
             self.find_latest_backup()
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
-        logging.info('Need to copy %s in %d files' % (nice_bytes(self.bytes_required), self.files_changed))
+        logging.info('Need to copy %s in %d files' % (filelist.nice_bytes(self.bytes_required), self.files_changed))
         # check target
         self.check_target()
         if dry_run:
-            for entry in self.root.flattened():
+            for entry in self.source_root.flattened():
                 sys.stdout.write('%s %s\n' % (
                         'C' if entry.changed else 'L',
                         entry,))
@@ -97,13 +102,12 @@ class Create(Backup):
             # backup files
             self.prepare_target()
             logging.debug('Copying/linking files')
-            for p in self.root.flattened():
+            for p in self.source_root.flattened():
                 p.create()
-                self.file_list.write(p.file_list_command)
             # secure directories (make then read-only too)
             logging.debug('Making directories read-only')
-            for p in self.root.flattened():
-                p.secure()
+            for p in self.source_root.flattened():
+                p.secure_backup()
             self.finalize_target()
             logging.info('Created %s' % (self.base_name,))
 

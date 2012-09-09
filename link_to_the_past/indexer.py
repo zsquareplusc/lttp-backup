@@ -48,6 +48,7 @@ class Location(object):
                 name = name.decode('utf-8', 'ignore')   # XXX
             path = os.path.join(parent.path, name)
             if indexer.is_included(path):
+                #~ logging.debug('is included %r' % (path,))
                 try:
                     stat_now = os.lstat(path)
                 except OSError: # permission error
@@ -63,13 +64,15 @@ class Location(object):
                     d = parent.new_dir(name, stat_now=stat_now)
                     self._scan(indexer, d, device)
                 elif stat.S_ISREG(mode) or stat.S_ISLNK(mode):
-                    d = parent.new_file(name, stat_now=stat_now)
+                    parent.new_file(name, stat_now=stat_now)
                 #~ elif stat.S_ISCHR(mode):
                 #~ elif stat.S_ISBLK(mode):
                 #~ elif stat.S_ISFIFO(mode):
                 #~ elif stat.S_ISSOCK(mode):
                 #~ else:
                     # ignore everything else
+            #~ else:
+                #~ logging.debug('is excluded %r' % (path,))
 
     def scan(self, indexer):
         """Find all files in the source directory"""
@@ -89,10 +92,10 @@ class Location(object):
 
 class Indexer(object):
     """Manage a tree of files and directories."""
-    def __init__(self):
+    def __init__(self, filelist):
         self.includes = []
         self.excludes = []
-        self.root = filelist.FileList()
+        self.root = filelist
 
     def is_included(self, name):
         for exclude in self.excludes:
@@ -108,7 +111,7 @@ class Indexer(object):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == '__main__':
-    i = Indexer()
+    i = Indexer(filelist.FileList())
     i.includes.append(Location('test/example_source'))
     i.excludes.append(ShellPattern('*.bak'))
     i.scan()

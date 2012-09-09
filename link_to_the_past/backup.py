@@ -16,13 +16,13 @@ import optparse
 import config_file_parser
 import profile
 #~ import filelist
-#~ import indexer
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class BackupException(Exception):
     """A class for backup related errors"""
 
+import indexer
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Backup(object):
@@ -32,6 +32,7 @@ class Backup(object):
         self.current_backup_path = None
         self.last_backup_path = None
         self.base_name = None
+        self.hash_name = None
         self.indexer = None
 
     def set_target_path(self, path):
@@ -143,7 +144,7 @@ class BackupControl(config_file_parser.ContolFileParser):
     def word_include(self):
         path = self.next_word()
         if self.backup.indexer is not None:
-            self.backup.indexer.includes.append(indxer.Location(self.path(path)))
+            self.backup.indexer.includes.append(indexer.Location(self.path(path)))
 
     def word_exclude(self):
         path = self.next_word()
@@ -152,9 +153,9 @@ class BackupControl(config_file_parser.ContolFileParser):
 
     def word_hash(self):
         """Set the hash function"""
-        if self.backup.root.hash_name is not None:
+        if self.backup.hash_name is not None:
             logging.warn('HASH directive found multiple times')
-        self.backup.root.set_hash(self.next_word())
+        self.backup.hash_name = self.next_word()
 
     def word_load_config(self):
         """include an other configuration file"""

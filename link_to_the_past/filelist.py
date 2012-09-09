@@ -20,6 +20,7 @@ Operations affecting the file system:
 """
 import sys
 import os
+import codecs
 import time
 import fnmatch
 import stat
@@ -173,7 +174,7 @@ class Stat(object):
             pass
             # XXX should have l-versions of all functions - missing in Python os mod. :(
             #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
-            #~ os.system('touch --no-dereference -r "%s" "%s"' % (self.escaped(self.path), self.escaped(dst))) # XXX insecure!
+            #~ os.system('touch --no-dereference -r "%s" "%s"' % (escaped(self.path), escaped(dst))) # XXX insecure!
         else:
             os.utime(path, (self.atime, self.mtime))
             os.chown(path, self.uid, self.gid)
@@ -257,7 +258,7 @@ class BackupPath(object):
                 self.stat.mtime,
                 self.stat.flags if self.stat.flags is not None else '-',
                 self.data_hash,
-                self.escaped(self.path))
+                escaped(self.path))
 
 
 class BackupFile(BackupPath):
@@ -308,17 +309,17 @@ class BackupFile(BackupPath):
                         f_dst.write(block)
         return h.hexdigest()
 
-    def _copy(self, src, dst):
+    def _copy(self):
         """Create a copy of the file"""
-        self.data_hash = self._copy_file(self.referece_path, self.backup_path)
-        os.utime(dst, (self.st_atime, self.st_mtime))
-        self.make_read_only(self.backup_path)
+        self.data_hash = self._copy_file(self.source_path, self.backup_path)
+        os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
+        self.stat.make_read_only(self.backup_path)
 
     def _link(self):
         """Create a hard link for the file"""
         logging.debug('hard linking %s' % (escaped(self.path),))
-        os.link(self.referece_path, self.backup_path)
-        self.make_read_only(self.backup_path)
+        os.link(self.source_path, self.backup_path)
+        self.stat.make_read_only(self.backup_path)
 
     def create(self):
         """Backup the file, either by hard linking or copying"""
@@ -386,18 +387,18 @@ class BackupDirectory(BackupPath):
 
     def create(self):
         """Directories are always created"""
-        logging.debug('new directory %s' % (escape(self.path),))
-        os.makedirs(self.abs_path)
-        os.utime(self.abs_path, (self.st_atime, self.st_mtime))
+        logging.debug('new directory %s' % (escaped(self.path),))
+        os.makedirs(self.backup_path)
+        os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
         # directory needs to stay writeable as we need to add files
 
     def secure_backup(self):
         """Secure backup against manipulation (make read-only)"""
-        self.make_read_only(self.backup_path)
+        self.stat.make_read_only(self.backup_path)
 
     def cp(self, dst, permissions=True, recursive=False):
         """Copy directories to given destination"""
-        logging.debug('new directory %s' % (escape(self.path),))
+        logging.debug('new directory %s' % (escaped(self.path),))
         os.makedirs(dst)
         if recursive:
             for entry in self.entries:
@@ -451,7 +452,7 @@ class BackupDirectory(BackupPath):
         return entry
 
     def new_file(self, name, *args, **kwargs):
-        entry = BackupDirectory(name, parent=self, filelist=self.filelist, *args, **kwargs)
+        entry = BackupFile(name, parent=self, filelist=self.filelist, *args, **kwargs)
         self.entries.append(entry)
         return entry
 
@@ -465,6 +466,7 @@ class FileList(BackupDirectory):
         self.reference = None
         self.base_name = None
         self.hash_name = None
+        self.hash_factory = None
 
     def set_hash(self, name):
         if name is None:
@@ -490,8 +492,8 @@ class FileList(BackupDirectory):
             rename = None
         with codecs.open(filename, 'w', 'utf-8') as file_list:
             if self.hash_name is not None:
-                self.file_list.write('hash %s\n' % (self.hash_name,))
-            for p in self.root.flattened():
+                file_list.write('hash %s\n' % (self.hash_name,))
+            for p in self.flattened():
                 file_list.write(p.file_list_command)
         # make it read-only
         os.chmod(filename, stat.S_IRUSR|stat.S_IRGRP)
@@ -507,6 +509,16 @@ class FileList(BackupDirectory):
             name = name[len(self.name):]
             return BackupDirectory.__getitem__(self, name)
         raise KeyError('no such directory: %s' % (name,))
+
+    def new_dir(self, name, *args, **kwargs):
+        entry = BackupDirectory(name, parent=self, filelist=self, *args, **kwargs)
+        self.entries.append(entry)
+        return entry
+
+    def new_file(self, name, *args, **kwargs):
+        entry = BackupFile(name, parent=self, filelist=self, *args, **kwargs)
+        self.entries.append(entry)
+        return entry
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

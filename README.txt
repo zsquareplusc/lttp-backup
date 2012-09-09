@@ -214,3 +214,37 @@ have wrong mtime
 
 smart compare of two trees
 - add, remove, change, same
+
+
+BackupPath.__cmp__ -> compare stats
+BackupFile.check_changes() -> remove see compare
+
+BackupDirectory.compare() -> addedfiles, deletedfiles, changedfiles, addeddirs, deleteddirs, changeddirs
+- iterator over all possible? maybe not so easily
+- use this to compare source tree with old backup
+- default => changed
+- comparison detects sameness and clears changed flag
+
+FileList
+- hash
+- load
+- save
+  - if exists -> write w/ .new suffix, del, rename
+  - else write directly
+
+Indexer
+- excludes
+- includes
+
+CreateBackup
+- source_root
+- backup_root
+
+RestoreBackup
+- backup_root
+
+CompareBackup
+- root1
+- root2
+
+ffi foe utimes call, os.system is insecure (filename escaping...)
