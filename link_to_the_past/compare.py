@@ -9,6 +9,7 @@ Compare backups and sources.
 """
 
 from restore import *
+import filelist
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENTED_ACTIONS = ['verify', 'integrity', 'changes']
@@ -41,14 +42,14 @@ def main():
             for item in b.root.flattened():
                 logging.debug('checking %s' % (item.path,))
                 status = None
-                if isinstance(item, BackupFile):
-                    if os.path.exists(item.abs_path):
-                        if not item.verify_hash(item.abs_path):
+                if isinstance(item, filelist.BackupFile):
+                    if os.path.exists(item.backup_path):
+                        if not item.verify_hash(item.backup_path):
                             status = 'CORRUPTED'
                     else:
                         status = 'MISSING'
-                elif isinstance(item, BackupDirectory):
-                    if not os.path.isdir(item.abs_path):
+                elif isinstance(item, filelist.BackupDirectory):
+                    if not os.path.isdir(item.backup_path):
                         status = 'MISSING'
                 if status:
                     sys.stdout.write('%s %s\n' % (status, item.path))
@@ -61,7 +62,7 @@ def main():
             # XXX search only looks at file list, so won't find files added to the source
             for item in b.root.flattened():
                 if fnmatch.fnmatch(item.path, path):
-                    if isinstance(item, BackupFile):
+                    if isinstance(item, filelist.BackupFile):
                         if os.path.exists(item.path):
                             status = 'S' if item.verify_stat(item.path) else 'm'
                             if not item.verify_hash(item.path):
@@ -76,8 +77,6 @@ def main():
             # XXX "now" as word to scan sources instead of laoding a backup
             other_backup = Restore()
             other_backup.target_path = b.target_path
-            other_backup.includes = b.includes
-            other_backup.excludes = b.excludes
             if args[0] == 'now':
                 other_backup.scan_sources()
             else:
@@ -90,7 +89,7 @@ def main():
                 except KeyError:
                     status = 'D'
                     sys.stdout.write('%s %s\n' % (status, src_dir.path))
-                    if isinstance(src_dir, BackupDirectory):
+                    if isinstance(src_dir, filelist.BackupDirectory):
                         for item in src_dir.flattened():
                             sys.stdout.write('%s %s\n' % (status, item.path))
                 else:
@@ -98,7 +97,7 @@ def main():
                     for entry in src_dir.entries:
                         for ref_entry in ref:
                             if entry.path == ref_entry.path:
-                                if entry.st_mode == ref_entry.st_mode:  # XXX proper compare
+                                if entry.stat.mode == ref_entry.stat.mode:  # XXX proper compare
                                     status = 'S'
                                 else:
                                     status = 'm'
