@@ -52,8 +52,7 @@ def words_in_file(filename, fileobj=None, include_newline=False):
 
 class ContolFileParser(object):
     """Parser for a simple language using white space separated words"""
-    def __init__(self, backup):
-        self.backup = backup
+    def __init__(self):
         self.root = '.'
 
     def parse(self, iterator):
@@ -77,11 +76,19 @@ class ContolFileParser(object):
             raise SyntaxError('unknown word: %r' % (word,))
 
     def path(self, path):
+        """\
+        Convert path to an absolute path. If it was relative, it is relative to
+        the location of the loaded configuration file.
+        """
         if not os.path.isabs(path):
             path = os.path.join(self.root, path)
         return path
 
     def load_file(self, filename):
+        """\
+        Load configuration file. Path of file is remembered so that contained
+        paths can be relative to the file.
+        """
         self.root = os.path.dirname(os.path.abspath(filename))
         self.parse(words_in_file(filename))
 

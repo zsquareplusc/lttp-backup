@@ -616,6 +616,10 @@ class Backup(object):
 class BackupControl(config_file_parser.ContolFileParser):
     """Parser for backup control files"""
 
+    def __init__(self, backup):
+        config_file_parser.ContolFileParser.__init__(self)
+        self.backup = backup
+
     def word_target(self):
         self.backup.set_target_path(self.path(self.next_word()))
 

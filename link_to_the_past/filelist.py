@@ -55,7 +55,16 @@ def nice_bytes(value):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def mode_to_chars(mode):
-    """'ls' like mode as character sequence"""
+    """\
+    'ls' like mode as character sequence.
+
+    >>> mode_to_chars(0o700|32768)
+    '-rwx------'
+    >>> mode_to_chars(0o070|32768)
+    '----rwx---'
+    >>> mode_to_chars(0o007|32768)
+    '-------rwx'
+    """
     if mode is None: return '----------'
     flags = []
     # file type
@@ -105,7 +114,16 @@ def mode_to_chars(mode):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def escaped(path):
-    """Escape control non printable characters and the space"""
+    """\
+    Escape control non printable characters and the space.
+
+    >>> escaped(' ')
+    '\\\\ '
+    >>> escaped('\\n')
+    '\\\\n'
+    >>> escaped(u'\u2000')
+    '\\\\u2000'
+    """
     return path.encode('unicode-escape').replace(' ', '\\ ')
 
 def unescape(path):
@@ -119,7 +137,9 @@ def unescape(path):
 
 class Stat(object):
     """Handle file meta data"""
+
     __slots__ = ['size', 'mode', 'uid', 'gid', 'atime', 'mtime', 'flags']
+
     def __init__(self):
         self.size = 0
         self.uid = None
@@ -424,6 +444,16 @@ class BackupDirectory(BackupPath):
                 if entry.name == name:
                     return entry
         raise KeyError('no such directory: %s' % (name,))
+
+    def new_dir(self, name, *args, **kwargs):
+        entry = BackupDirectory(name, parent=self, filelist=self.filelist, *args, **kwargs)
+        self.entries.append(entry)
+        return entry
+
+    def new_file(self, name, *args, **kwargs):
+        entry = BackupDirectory(name, parent=self, filelist=self.filelist, *args, **kwargs)
+        self.entries.append(entry)
+        return entry
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
