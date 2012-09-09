@@ -130,8 +130,8 @@ def unescape(path):
     """Escape control non printable characters and the space"""
     return path.decode('unicode-escape').replace('\\ ', ' ')
 
-#~ def join(root, path):
-    #~ return os.path.normpath('%s%s%s' % (root, os.sep, path))
+def join(root, path):
+    return os.path.normpath('%s%s%s' % (root, os.sep, path))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -169,7 +169,7 @@ class Stat(object):
         Apply all stat info (mode bits, atime, mtime, flags) to path.
         Only useful when called on files but not on symlinks (links are ignored).
         """
-        if stat.S_ISLNK(self.st_mode):
+        if stat.S_ISLNK(self.mode):
             pass
             # XXX should have l-versions of all functions - missing in Python os mod. :(
             #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
@@ -288,11 +288,11 @@ class BackupFile(BackupPath):
         if permissions:
             self.stat.write(dst)
         if self.data_hash != hexdigest:
-            logging.error('ERROR: hash changed! File was copied successfully but does not match the stored hash: %s' % (escape(self.path),))
+            logging.error('ERROR: hash changed! File was copied successfully but does not match the stored hash: %s (expected: %s got: %s)' % (escaped(self.path), self.data_hash, hexdigest))
 
     def _copy_file(self, src, dst):
         """Create a copy a file (or link)"""
-        h = self.backup.hash_factory()
+        h = self.filelist.hash_factory()
         if os.path.islink(src):
             linkto = os.readlink(src)
             h.update(linkto)
@@ -477,6 +477,28 @@ class FileList(BackupDirectory):
         logging.debug('Loading file list %s' % (filename,))
         c = FileListParser(self)
         c.load_file(filename)
+
+    def save(self, filename):
+        """Write a new version of the file list"""
+        # if file already exists, write to a new file and later remove old then
+        # rename. this ensures that the list is not lost, evenif the write
+        # fails.
+        if os.path.exists(filename):
+            rename = filname
+            filename = filename + '.new'
+        else:
+            rename = None
+        with codecs.open(filename, 'w', 'utf-8') as file_list:
+            if self.hash_name is not None:
+                self.file_list.write('hash %s\n' % (self.hash_name,))
+            for p in self.root.flattened():
+                file_list.write(p.file_list_command)
+        # make it read-only
+        os.chmod(filename, stat.S_IRUSR|stat.S_IRGRP)
+        if rename:
+            # now remove old list and replace with new one
+            os.remove(rename)
+            os.rename(filename, rename)
 
     def __getitem__(self, name):
         if name == self.name:

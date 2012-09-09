@@ -15,18 +15,42 @@ backups the further back in time they were made.
 (C) 2012 cliechti@gmx.net
 """
 
+import shutil
+
 from restore import *
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+class writeable(object):
+    """\
+    Context manager that chmod's the given path to make it writeable.
+    The original permissions are restored on exit.
+    """
+    def __init__(self, path):
+        self.path = path
+        self.permissions = os.lstat(path).st_mode
+
+    def __enter__(self):
+        os.chmod(self.path, self.permissions|stat.S_IWUSR)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        os.chmod(self.path, self.permissions)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 class EditBackup(Restore):
+
+    def write_file_list(self):
+        """Write a new version of the file list"""
+        with writeable(self.current_backup_path):
+            self.file_list.save(os.path.join(self.current_backup_path, 'file_list'))
 
     def rm(self, source, recursive=False):
         """\
         Remove a file or a directory (if recursive flag is set).
         This will ultimately delete the file(s) from the backup!
         """
-        item = self.find_file(source)
+        item = self.root[source]
         if isinstance(item, BackupDirectory):
             if recursive:
                 # parent temporarily needs to be writeable to remove files
@@ -79,12 +103,14 @@ def main():
         if action == 'rm':
             if len(args) != 1:
                 parser.error('expected SRC')
-            b.find_file(args[0]) # XXX just test if it is there
+            b.root[args[0]] # XXX just test if it is there. catch ex and print error
             sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
             if raw_input('Continue? [y/N]').lower() != 'y':
                 sys.stderr.write('Aborted\n')
                 sys.exit(1)
             b.rm(args[0], options.recursive)
+        #~ elif action == 'purge':
+        #~ elif action == 'autopurge':
         else:
             parser.error('unknown ACTION: %r' % (action,))
     except KeyboardInterrupt:

@@ -39,13 +39,6 @@ class Location(object):
     def __repr__(self):
         return 'Location(%r)' % (self.path,)
 
-    #~ def relative_path(self, path):
-        #~ if os.path.isabs(path):
-            #~ norm_path = os.path.normpath(path)
-            #~ if norm_path.startswith(self.path):
-                #~ path = path[len(os.pathsep)+len(self.path):]
-        #~ return path
-
     def _scan(self, indexer, parent, device):
         """scan recursively and handle excluded files on the fly"""
         logging.debug('scanning %r' % (parent.path,))

@@ -13,82 +13,19 @@ import fnmatch
 import logging
 
 import config_file_parser
+import filelist
 from backup import *
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-class writeable(object):
-    """\
-    Context manager that chmod's the given path to make it writeable.
-    The original permissions are restored on exit.
-    """
-    def __init__(self, path):
-        self.path = path
-        self.permissions = os.lstat(path).st_mode
-
-    def __enter__(self):
-        os.chmod(self.path, self.permissions|stat.S_IWUSR)
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        os.chmod(self.path, self.permissions)
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-class FileList(config_file_parser.ContolFileParser):
-    """Parser for file lists"""
-
-    def __init__(self, *args, **kwargs):
-        config_file_parser.ContolFileParser.__init__(self, *args, **kwargs)
-        self.backup.hash_name = None
-        self.backup.hash_factory = None
-
-    def word_hash(self):
-        """Set the hash function"""
-        if self.backup.hash_name is not None:
-            logging.warn('HASH directive found multiple times')
-        self.backup.set_hash(self.next_word())
-
-    def word_p1(self):
-        """Parse file info and add it to the internal (file) tree"""
-        st_mode = int(self.next_word())
-        if stat.S_ISDIR(st_mode):
-            entry = BackupDirectory(None, backup=self.backup)
-        else:
-            entry = BackupFile(backup=self.backup)
-        entry.st_mode = st_mode
-        entry.st_uid = int(self.next_word())
-        entry.st_gid = int(self.next_word())
-        entry.st_size = int(self.next_word())
-        entry.st_atime = float(self.next_word())
-        entry.st_mtime = float(self.next_word())
-        st_flags = self.next_word()
-        if st_flags != '-':
-            entry.st_flags = float(st_flags)
-        entry.data_hash = self.next_word()
-        path = entry.unescape(self.next_word())
-
-        path_elements = path.split(os.sep)
-        entry.name = path_elements[-1]
-        parent = self.backup.root
-        for name in path_elements[1:-1]:
-            for p in parent.entries:
-                if p.name == name:
-                    parent = p
-                    break
-        entry.parent = parent
-        parent.entries.append(entry)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Restore(Backup):
     def __init__(self):
         Backup.__init__(self)
-        self.root = BackupDirectory(u'/', backup=self)
+        self.root = filelist.FileList()
 
     def load_file_list(self):
         logging.debug('Loading file list')
-        f = FileList(self)
-        f.load_file(os.path.join(self.current_backup_path, 'file_list'))
+        self.root.load(os.path.join(self.current_backup_path, 'file_list'))
 
     def find_backup_by_time(self, timespec=None):
         if timespec is None:
@@ -103,12 +40,8 @@ class Restore(Backup):
                 raise BackupException('No backup found matching %r' % (timespec,))
         logging.info('Active backup: %s' % (name,))
         self.load_file_list()
+        self.root.root = self.current_backup_path
 
-    def find_file(self, path):
-        for item in self.root.flattened(include_self=True):
-            if item.path == path:
-                return item
-        raise BackupException('not found: %r' % (path,))
 
     def cp(self, source, destination, recursive=False):
         """\
@@ -116,30 +49,16 @@ class Restore(Backup):
         destination. To copy directories, the recursive flag needs
         to be set, it raises BackupException otherwise.
         """
-        item = self.find_file(source)
+        item = self.root[source]
         if os.path.isdir(destination):
             destination = os.path.join(destination, item.name)
-        if isinstance(item, BackupDirectory):
+        if isinstance(item, filelist.BackupDirectory):
             if recursive:
-                item.restore(destination, recursive=recursive)
+                item.cp(destination, recursive=recursive)
             else:
                 raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
         else:
-            item.restore(destination)
-
-    def write_file_list(self):
-        """Write a new version of the file list"""
-        the_copy = os.path.join(self.current_backup_path, 'file_list.new')
-        the_original = os.path.join(self.current_backup_path, 'file_list')
-        with writeable(self.current_backup_path):
-            with codecs.open(the_copy, 'w', 'utf-8') as file_list:
-                for p in self.root.flattened():
-                    file_list.write(p.file_list_command)
-            # make it read-only
-            os.chmod(the_copy, stat.S_IRUSR|stat.S_IRGRP)
-            # now remove old list and replace with new one
-            os.remove(the_original)
-            os.rename(the_copy, the_original)
+            item.cp(destination)
 
 
     def optparse_populate(self, parser):
@@ -217,9 +136,9 @@ def main():
         elif action == 'cat':
             if len(args) != 1:
                 parser.error('expected SRC')
-            item = b.find_file(args[0])
+            item = b.root[args[0]]
             # XXX set stdout in binary mode
-            with open(item.abs_path, 'rb') as f:
+            with open(item.backup_path, 'rb') as f:
                 sys.stdout.write(f.read(2048))
         else:
             parser.error('unknown ACTION: %r' % (action,))

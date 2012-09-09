@@ -23,10 +23,10 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.root = BackupDirectory(u'/', backup=self)
+        self.root = FileList()
         self.bytes_required = 0
         self.files_changed = 0
-        self.file_list = None
+        self.indexer = indexer.Indexer()
 
     def prepare_target(self):
         """Create a new target folder"""
@@ -35,17 +35,12 @@ class Create(Backup):
         self.current_backup_path = self.base_name + '_incomplete'
         logging.debug('Creating backup in %s' % (self.current_backup_path,))
         os.mkdir(self.current_backup_path)
-        self.file_list = codecs.open(os.path.join(self.current_backup_path, 'file_list'), 'w', 'utf-8')
-        if self.hash_name is not None:
-            self.file_list.write('hash %s\n' % (self.hash_name,))
 
     def finalize_target(self):
         """Complete the backup"""
-        # finish file list
-        self.file_list.close()
-        self.file_list = None
-        # make file list and then the backup itself also read only
-        os.chmod(os.path.join(self.current_backup_path, 'file_list'), stat.S_IRUSR|stat.S_IRGRP)
+        # write file list
+        self.root.save(os.path.join(self.current_backup_path, 'file_list'))
+        # make backup itself read-only
         os.chmod(self.current_backup_path, stat.S_IRUSR|stat.S_IXUSR|stat.S_IRGRP|stat.S_IXGRP)
         # remove the '_incomplete' suffix
         os.rename(self.current_backup_path, self.base_name)
