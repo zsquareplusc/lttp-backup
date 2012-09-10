@@ -30,9 +30,30 @@ class CRC32Hash(object):
     def hexdigest(self):
         return '%08x' % (self.value,)
 
+
+class NoHash(object):
+    """\
+    API compatible to the hashlib functions (subset used by this program).
+
+    >>> h = CRC32Hash()
+    >>> h.update('Hello World')
+    >>> h.hexdigest()
+    '-'
+    """
+
+    def __init__(self):
+        pass
+
+    def update(self, data):
+        pass
+
+    def hexdigest(self):
+        return '-'
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 SUPPORTED_HASHES = {
+        'NONE':     NoHash,
         'CRC32':    CRC32Hash,
         'MD5':      hashlib.md5,
         'SHA-256':  hashlib.sha256,
@@ -48,6 +69,7 @@ def get_factory(name):
     >>> h.hexdigest()
     'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
     """
+    if name is None: name = 'NONE'
     return SUPPORTED_HASHES[name.upper()]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -28,7 +28,7 @@ incompatible.
 
 - Changed files are copied entirely.
 - Special files (devices) are not backed up.
-- Filesystems are not crosssed file. Use ``include`` directive in
+- File systems are not crossed file. Use ``include`` directive in
   configuration file to manually include the path or an ``exclude`` directive
   to suppress the warning.
 - Files are checked by modification date and size.
