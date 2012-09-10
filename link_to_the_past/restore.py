@@ -24,7 +24,6 @@ class Restore(Backup):
         self.root = filelist.FileList()
 
     def load_file_list(self):
-        logging.debug('Loading file list')
         self.root.load(os.path.join(self.current_backup_path, 'file_list'))
 
     def find_backup_by_time(self, timespec=None):

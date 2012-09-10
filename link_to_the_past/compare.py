@@ -12,6 +12,28 @@ from restore import *
 import filelist
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def print_changes(iterator, long_format):
+    for root, dirs, files in iterator:
+        # sort by name again
+        entries = []
+        entries.extend((entry, ' ') for entry in files.same)
+        entries.extend((entry, 'M') for entry in files.changed)
+        entries.extend((entry, 'A') for entry in files.added)
+        entries.extend((entry, 'R') for entry in files.removed)
+        entries.extend((entry, ' ') for entry in dirs.same)
+        entries.extend((entry, 'A') for entry in dirs.added)
+        entries.extend((entry, 'R') for entry in dirs.removed)
+        entries.sort()
+        for entry, status in entries:
+            if long_format:
+                sys.stdout.write('%s %s\n' % (status, entry))
+            else:
+                sys.stdout.write('%s %s\n' % (status, entry.path))
+        for e1, e2 in zip(files.changed, files.changed_other):
+            print "<--", e1
+            print "-->", e2
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENTED_ACTIONS = ['verify', 'integrity', 'changes']
 
 def main():
@@ -21,6 +43,15 @@ def main():
     b = Restore()
     parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
     b.optparse_populate(parser)
+
+    group = optparse.OptionGroup(parser, 'Display Options')
+    group.add_option("-l", "--long",
+        dest = "long_format",
+        help = "Show detailed file info",
+        default = False,
+        action = 'store_true'
+    )
+    parser.add_option_group(group)
 
     (options, args) = parser.parse_args(sys.argv[1:])
 
@@ -41,7 +72,7 @@ def main():
             # compare hashes in backup with saved file list
             for item in b.root.flattened():
                 logging.debug('checking %s' % (item.path,))
-                status = None
+                status = 'OK'
                 if isinstance(item, filelist.BackupFile):
                     if os.path.exists(item.backup_path):
                         if not item.verify_hash(item.backup_path):
@@ -83,37 +114,7 @@ def main():
                 other_backup.find_backup_by_time(args[0])
             if b.current_backup_path == other_backup.current_backup_path:
                 parser.error('Both TIMESPECs point to the same backup')
-            for src_dir in b.root.walk():
-                try:
-                    other_entry = other_backup.root[src_dir.path]
-                except KeyError:
-                    status = 'D'
-                    sys.stdout.write('%s %s\n' % (status, src_dir.path))
-                    if isinstance(src_dir, filelist.BackupDirectory):
-                        for item in src_dir.flattened():
-                            sys.stdout.write('%s %s\n' % (status, item.path))
-                else:
-                    ref = list(other_entry.entries) # work on copy
-                    for entry in src_dir.entries:
-                        for ref_entry in ref:
-                            if entry.path == ref_entry.path:
-                                if entry.stat.mode == ref_entry.stat.mode:  # XXX proper compare
-                                    status = 'S'
-                                else:
-                                    status = 'm'
-                                ref.remove(ref_entry)
-                                break
-                        else:
-                            status = 'D'
-                        sys.stdout.write('%s %s\n' % (status, entry.path))
-                    # print files in ref but not in source
-                    status = 'A'
-                    for ref_entry in ref:
-                        sys.stdout.write('%s %s\n' % (status, ref_entry.path))
-                        if isinstance(ref_entry, BackupDirectory):
-                            for item in ref_entry.flattened():
-                                sys.stdout.write('%s %s\n' % (status, item.path))
-
+            print_changes(b.root.compare(other_backup.root), options.long_format)
         else:
             parser.error('unknown ACTION: %r' % (action,))
     except KeyboardInterrupt:

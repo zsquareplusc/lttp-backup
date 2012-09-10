@@ -136,6 +136,20 @@ def join(root, path):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+class CompareResult(object):
+    """Store entry lists for compare operations."""
+
+    __slots__ = ('same', 'changed', 'changed_other', 'added', 'removed')
+
+    def __init__(self):
+        self.same = []
+        self.changed = []
+        self.changed_other = []
+        self.added = []
+        self.removed = []
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 class Stat(object):
     """Handle file meta data"""
 
@@ -151,6 +165,9 @@ class Stat(object):
         self.flags = None
 
     def extract(self, stat_now):
+        """\
+        Copy meta data from a named tuple as returned by os.(l)stat.
+        """
         if stat.S_ISDIR(stat_now.st_mode):
             self.size = 0
         else:
@@ -188,7 +205,7 @@ class Stat(object):
             os.chmod(path, self.mode)
 
     def make_read_only(self, path):
-        """use chmod to apply the modes with W bits cleared"""
+        """Use chmod to apply the modes with W bits cleared"""
         # XXX should have l-versions of all functions - missing in Python os mod. :(
         if not stat.S_ISLNK(self.mode):
             os.chmod(path, self.mode & ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH))
@@ -196,7 +213,8 @@ class Stat(object):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class BackupPath(object):
-    """Representing an object that is contained in the backup"""
+    """Representing an object that is contained in a backup"""
+
     __slots__ = ['name', 'parent', '_path', 'filelist', 'changed', 'data_hash', 'stat']
 
     def __init__(self, name=None, filelist=None, stat_now=None, parent=None):
@@ -266,18 +284,19 @@ class BackupFile(BackupPath):
 
     BLOCKSIZE = 1024*256   # 256kB
 
-    #~ def check_changes(self):
-        #~ """Compare the original file with the backup"""
-        #~ try:
-            #~ prev = os.lstat(self.join(self.backup.last_backup_path, self.path))
-        #~ except OSError:
-            #~ # file does not exist in backup
-            #~ self.changed = True
-        #~ else:
-            #~ # ignore changes in other meta data. just look at the size and mtime
-            #~ if (self.st_size == prev.st_size and
-                    #~ abs(self.st_mtime - prev.st_mtime) <= 0.00001): # 10us; as it is a float...
-                #~ self.changed = False
+    def __eq__(self, other):
+        same_hash = True    # if can't compare - ignore
+        # hashes must be made using same algorithm and must be calculated (not '-')
+        if self.filelist.hash_name == other.filelist.hash_name:
+            if self.data_hash != '-' and other.data_hash != '-':
+                same_hash = (self.data_hash == other.data_hash)
+        return (same_hash and
+                self.stat.uid == other.stat.uid and
+                self.stat.gid == other.stat.gid and
+                self.stat.mode == other.stat.mode and
+                self.stat.size == other.stat.size and
+                abs(self.stat.mtime - other.stat.mtime) <= 0.00001 and # 10us; as it is a float...
+                self.stat.flags == other.stat.flags)
 
     def cp(self, dst, permissions=True):
         """\
@@ -289,7 +308,7 @@ class BackupFile(BackupPath):
         if permissions:
             self.stat.write(dst)
         if self.data_hash != hexdigest:
-            logging.error('ERROR: hash changed! File was copied successfully but does not match the stored hash: %s (expected: %s got: %s)' % (escaped(self.path), self.data_hash, hexdigest))
+            logging.error('WARNING: hash changed! File was copied successfully but does not match the stored hash: %s (expected: %s got: %s)' % (escaped(self.path), self.data_hash, hexdigest))
 
     def _copy_file(self, src, dst):
         """Create a copy a file (or link)"""
@@ -434,6 +453,61 @@ class BackupDirectory(BackupPath):
                 for x in entry.walk():
                     yield x
 
+    def compare(self, other):
+        """\
+        Iterate over two trees, comparing them.
+
+        yields a tuple with the lists (path, same, changed, added, removed).
+        they all refer to the current path (1st element).
+
+        same: entries of this tree
+        changed: tuples of entries (this tree, other tree)
+        added: entries of this tree
+        removed: entries of the other tree
+        """
+        if self.path != other.path:
+            # this should not happen when comparing trees starting with the root.
+            raise ValueError('other tree does not contain: %s' % (escaped(self.path),))
+        #~ logging.debug('compare: %s' % (escaped(self.path),))
+        for entry in self.entries:
+            files = CompareResult()
+            dirs = CompareResult()
+            ref = list(other.entries) # work on copy
+            for entry in self.entries:
+                for ref_entry in ref:
+                    if entry.path == ref_entry.path:
+                        # XXX handle dirs that were files and vice versa
+                        if isinstance(entry, BackupDirectory):
+                            # dirs can not change
+                            dirs.same.append(entry)
+                        else:
+                            if entry == ref_entry:
+                                files.same.append(entry)
+                            else:
+                                files.changed.append(entry)
+                                files.changed_other.append(ref_entry)
+                        ref.remove(ref_entry)
+                        break
+                else:
+                    if isinstance(entry, BackupDirectory):
+                        dirs.added.append(entry)
+                    else:
+                        files.added.append(entry)
+            # entries left in the ref list correspond to the items deleted in the source
+            for entry in ref:
+                if isinstance(entry, BackupDirectory):
+                    dirs.removed.append(entry)
+                else:
+                    files.removed.append(entry)
+        yield (self.path, dirs, files)
+        # have to go to the list once again as subdirs should be reported after
+        # their parents, it can not be done in the loop above
+        for entry in dirs.same:
+            for x in entry.compare(other[entry.name]):
+                yield x
+        #~ for entry in dirs.added:
+        #~ for entry in dirs.removed:
+
     def __getitem__(self, name):
         if os.sep in name:
             head, tail = name.split(os.sep, 1)
@@ -444,17 +518,25 @@ class BackupDirectory(BackupPath):
             for entry in self.entries:
                 if entry.name == name:
                     return entry
-        raise KeyError('no such directory: %s' % (name,))
+        raise KeyError('no such directory: %s' % (escaped(name),))
 
     def new_dir(self, name, *args, **kwargs):
+        """Create a new sub-directory in this directory"""
         entry = BackupDirectory(name, parent=self, filelist=self.filelist, *args, **kwargs)
         self.entries.append(entry)
         return entry
 
     def new_file(self, name, *args, **kwargs):
+        """Create a new file in this directory"""
         entry = BackupFile(name, parent=self, filelist=self.filelist, *args, **kwargs)
         self.entries.append(entry)
         return entry
+
+    def print_listing(self):
+        """For debugging: print a complete tree"""
+        sys.stdout.write('Listing: %s\n' % (escaped(self.path),))
+        for entry in self.flattened():
+            sys.stdout.write('%s\n' % (entry,))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -483,7 +565,7 @@ class FileList(BackupDirectory):
     def save(self, filename):
         """Write a new version of the file list"""
         # if file already exists, write to a new file and later remove old then
-        # rename. this ensures that the list is not lost, evenif the write
+        # rename. this ensures that the list is not lost, even if the write
         # fails.
         if os.path.exists(filename):
             rename = filname
@@ -507,8 +589,7 @@ class FileList(BackupDirectory):
             return self
         if name.startswith(self.name):
             name = name[len(self.name):]
-            return BackupDirectory.__getitem__(self, name)
-        raise KeyError('no such directory: %s' % (name,))
+        return BackupDirectory.__getitem__(self, name)
 
     def new_dir(self, name, *args, **kwargs):
         entry = BackupDirectory(name, parent=self, filelist=self, *args, **kwargs)

@@ -31,6 +31,9 @@ class Create(Backup):
         self.files_changed = 0
         self.indexer = indexer.Indexer(self.source_root)
 
+    def load_backup_file_list(self):
+        self.backup_root.load(os.path.join(self.last_backup_path, 'file_list'))
+
     def prepare_target(self):
         """Create a new target folder"""
         # create new directory for the backup
@@ -57,8 +60,11 @@ class Create(Backup):
             logging.info('No previous backup, create full copy of all items')
         else:
             logging.debug('Checking for changes')
-            for item in self.source_root.flattened():
-                item.check_changes()
+            #~ self.source_root.print_listing()
+            #~ self.backup_root.print_listing()
+            for root, dirs, files in self.source_root.compare(self.backup_root):
+                for entry in files.same:
+                    entry.changed = False
         # count bytes and files to backup
         self.bytes_required = 0
         self.files_changed = 0
@@ -87,6 +93,7 @@ class Create(Backup):
         # find latest backup to work incrementally
         if not full_backup:
             self.find_latest_backup()
+            self.load_backup_file_list()
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
