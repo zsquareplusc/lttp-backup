@@ -116,14 +116,23 @@ sensitive content etc.).
 .. note:: It usually makes sense to add an ``exclude`` rule to the
           control file so that it is not included again in the next backup.
 
-timespec - time specifcations
------------------------------
+timespec - time specifications
+------------------------------
 The -t option accepts the following expressions:
 
 - ``last`` the most recent backup, same as omitting -t
 - ``previous`` one second most recent backup
 - ``first`` the first and oldest one
-
+- expressions ending in ``ago``, e.g.: ``1 hour ago``, ``1 day ago``
+  supported units are ``hour``, ``day``, ``week``, ``month``, ``year`` as well
+  as each of them in plural form with a ``s`` appended. The amount must be a
+  positive integer number (> 0).
+- ``yesterday`` is the same as ``1 day ago``
+- dates such as ``2012-04-01``
+- dates and times such as ``2012-04-01_1655``
+- partial dates also work, ``2012`` or ``2012-04`` because the time
+  specification is simply matched against the name of the backup on the disk
+  and this name is simply the date/time strings as seen above.
 
 
 Profiles

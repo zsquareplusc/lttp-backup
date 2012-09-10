@@ -15,14 +15,10 @@ import optparse
 
 import config_file_parser
 import profile
-#~ import filelist
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-class BackupException(Exception):
-    """A class for backup related errors"""
-
 import indexer
+#~ import filelist
+from error import BackupException
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Backup(object):

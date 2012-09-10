@@ -29,9 +29,9 @@ def print_changes(iterator, long_format):
                 sys.stdout.write('%s %s\n' % (status, entry))
             else:
                 sys.stdout.write('%s %s\n' % (status, entry.path))
-        for e1, e2 in zip(files.changed, files.changed_other):
-            print "<--", e1
-            print "-->", e2
+        #~ for e1, e2 in zip(files.changed, files.changed_other):
+            #~ print "<--", e1
+            #~ print "-->", e2
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENTED_ACTIONS = ['verify', 'integrity', 'changes']

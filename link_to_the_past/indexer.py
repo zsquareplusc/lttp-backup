@@ -14,7 +14,7 @@ import stat
 import logging
 
 import filelist
-from backup import BackupException
+from error import BackupException
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
