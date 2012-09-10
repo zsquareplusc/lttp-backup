@@ -116,9 +116,19 @@ sensitive content etc.).
 .. note:: It usually makes sense to add an ``exclude`` rule to the
           control file so that it is not included again in the next backup.
 
+timespec - time specifcations
+-----------------------------
+The -t option accepts the following expressions:
+
+- ``last`` the most recent backup, same as omitting -t
+- ``previous`` one second most recent backup
+- ``first`` the first and oldest one
+
+
+
 Profiles
 ========
-A profile is the same as a configuration file but located in a sepcial place.
+A profile is the same as a configuration file but located in a special place.
 The idea is to make it easier to work with multiple configurations.
 
 Without any -p or -c options, a default configuration is searched.
@@ -193,14 +203,11 @@ TODO and ideas
 - commands
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
-  - restore recursively, optionally redirect to new location
   - autoclean -> remove incomplete backups
-  - compare -> compare stat values on one/all backups and original
   - purge remove complete backups
 - differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
-- timespec module, regexp
 - config file_
   - force-copy PATTERN
 - how to handle filenames with encoding errors?

@@ -14,6 +14,7 @@ import logging
 
 import config_file_parser
 import filelist
+import timespec
 from backup import *
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -26,17 +27,13 @@ class Restore(Backup):
     def load_file_list(self):
         self.root.load(os.path.join(self.current_backup_path, 'file_list'))
 
-    def find_backup_by_time(self, timespec=None):
+    def find_backup_by_time(self, timespec_str=None):
         if timespec is None:
             name = self.find_latest_backup()
             self.current_backup_path = self.last_backup_path
         else:
-            for name in self.find_backups():
-                if timespec in name:
-                    self.current_backup_path = os.path.join(self.target_path, name)
-                    break
-            else:
-                raise BackupException('No backup found matching %r' % (timespec,))
+            name = timespec.get_by_timespec(self.find_backups(), timespec_str)
+            self.current_backup_path = os.path.join(self.target_path, name)
         logging.info('Active backup: %s' % (name,))
         self.load_file_list()
         self.root.root = self.current_backup_path
