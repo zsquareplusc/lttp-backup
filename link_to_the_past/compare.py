@@ -9,6 +9,7 @@ Compare backups and sources.
 """
 
 from restore import *
+from create import *
 import filelist
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -85,22 +86,15 @@ def main():
                 if status:
                     sys.stdout.write('%s %s\n' % (status, item.path))
         elif action == 'verify':
-            # compare hashes in source with saved file list
-            if args:
-                path = os.sep + args[0]
-            else:
-                path = '*'
-            # XXX search only looks at file list, so won't find files added to the source
-            for item in b.root.flattened():
-                if fnmatch.fnmatch(item.path, path):
-                    if isinstance(item, filelist.BackupFile):
-                        if os.path.exists(item.path):
-                            status = 'S' if item.verify_stat(item.path) else 'm'
-                            if not item.verify_hash(item.path):
-                                status = 'M'
-                        else:
-                            status = 'D'
-                        sys.stdout.write('%s %s\n' % (status, item))
+            #~ # compare hashes in source with saved file list
+            #~ if args:
+                #~ path = os.sep + args[0]
+            #~ else:
+                #~ path = '*'
+            scan = Create()
+            scan.optparse_evaluate(options)
+            scan.indexer.scan()
+            print_changes(scan.source_root.compare(b.root), options.long_format)
         elif action == 'changes':
             # compare changes between two backups
             if not args:

@@ -141,12 +141,12 @@ class CompareResult(object):
 
     __slots__ = ('same', 'changed', 'changed_other', 'added', 'removed')
 
-    def __init__(self):
-        self.same = []
-        self.changed = []
-        self.changed_other = []
-        self.added = []
-        self.removed = []
+    def __init__(self, same=None, changed=None, changed_other=None, added=None, removed=None):
+        self.same = same if same is not None else []
+        self.changed = changed if changed is not None else []
+        self.changed_other = changed_other if changed_other is not None else []
+        self.added = added if added is not None else []
+        self.removed = removed if removed is not None else []
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -439,18 +439,19 @@ class BackupDirectory(BackupPath):
                 for x in entry.flattened():
                     yield x
 
-    #~ def files(self):
-        #~ """Iterate over files in a directory, subdirectories are ignored"""
-        #~ for entry in self.entries:
-            #~ if isinstance(entry, BackupFile):
-                #~ yield entry
-
-    def walk(self):
-        """Generator yielding all directories recursively"""
-        yield self
+    def walk(self, recursive=True):
+        """Generator yielding all directories and files recursively"""
+        files = []
+        dirs = []
         for entry in self.entries:
             if isinstance(entry, BackupDirectory):
-                for x in entry.walk():
+                dirs.append(entry)
+            else:
+                files.append(entry)
+        yield self.path, dirs, files
+        if recursive:
+            for directory in dirs:
+                for x in directory.walk():
                     yield x
 
     def compare(self, other):
@@ -469,44 +470,53 @@ class BackupDirectory(BackupPath):
             # this should not happen when comparing trees starting with the root.
             raise ValueError('other tree does not contain: %s' % (escaped(self.path),))
         #~ logging.debug('compare: %s' % (escaped(self.path),))
+        files = CompareResult()
+        dirs = CompareResult()
+        ref = list(other.entries) # work on copy
         for entry in self.entries:
-            files = CompareResult()
-            dirs = CompareResult()
-            ref = list(other.entries) # work on copy
-            for entry in self.entries:
-                for ref_entry in ref:
-                    if entry.path == ref_entry.path:
-                        # XXX handle dirs that were files and vice versa
-                        if isinstance(entry, BackupDirectory):
-                            # dirs can not change
-                            dirs.same.append(entry)
-                        else:
-                            if entry == ref_entry:
-                                files.same.append(entry)
-                            else:
-                                files.changed.append(entry)
-                                files.changed_other.append(ref_entry)
-                        ref.remove(ref_entry)
-                        break
-                else:
+            for ref_entry in ref:
+                if entry.path == ref_entry.path:
+                    # XXX handle dirs that were files and vice versa
                     if isinstance(entry, BackupDirectory):
-                        dirs.added.append(entry)
+                        # dirs can not change
+                        dirs.same.append(entry)
                     else:
-                        files.added.append(entry)
-            # entries left in the ref list correspond to the items deleted in the source
-            for entry in ref:
+                        if entry == ref_entry:
+                            files.same.append(entry)
+                        else:
+                            files.changed.append(entry)
+                            files.changed_other.append(ref_entry)
+                    ref.remove(ref_entry)
+                    break
+            else:
                 if isinstance(entry, BackupDirectory):
-                    dirs.removed.append(entry)
+                    dirs.added.append(entry)
                 else:
-                    files.removed.append(entry)
+                    files.added.append(entry)
+        # entries left in the ref list correspond to the items deleted in the source
+        for entry in ref:
+            if isinstance(entry, BackupDirectory):
+                dirs.removed.append(entry)
+            else:
+                files.removed.append(entry)
         yield (self.path, dirs, files)
         # have to go to the list once again as subdirs should be reported after
         # their parents, it can not be done in the loop above
         for entry in dirs.same:
             for x in entry.compare(other[entry.name]):
                 yield x
-        #~ for entry in dirs.added:
-        #~ for entry in dirs.removed:
+        # if exhaustive listing is requested, recursively report all items in
+        # added or removed directories too
+        for entry in dirs.removed:
+            for path, w_dirs, w_files in entry.walk():
+                c_files = CompareResult(removed=w_files)
+                c_dirs = CompareResult(removed=w_dirs)
+                yield (self.path, c_dirs, c_files)
+        for entry in dirs.added:
+            for path, w_dirs, w_files in entry.walk():
+                c_files = CompareResult(added=w_files)
+                c_dirs = CompareResult(added=w_dirs)
+                yield (self.path, c_dirs, c_files)
 
     def __getitem__(self, name):
         if os.sep in name:
@@ -532,9 +542,9 @@ class BackupDirectory(BackupPath):
         self.entries.append(entry)
         return entry
 
-    def print_listing(self):
+    def print_listing(self, message='Listing'):
         """For debugging: print a complete tree"""
-        sys.stdout.write('Listing: %s\n' % (escaped(self.path),))
+        sys.stdout.write('%s: %s\n' % (message, escaped(self.path)))
         for entry in self.flattened():
             sys.stdout.write('%s\n' % (entry,))
 
