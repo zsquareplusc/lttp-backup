@@ -60,8 +60,8 @@ class EditBackup(Restore):
                     for entry in item.flattened(include_self=True):
                         # directories need to be writeable
                         if isinstance(entry, filelist.BackupDirectory):
-                            entry.st_mode |= stat.S_IWUSR
-                            entry.set_stat(entry.backup_path)
+                            entry.stat.mode |= stat.S_IWUSR
+                            entry.stat.write(entry.backup_path, chmod_only=True)
                     # then remove the complete sub-tree
                     shutil.rmtree(item.backup_path)
                 item.parent.entries.remove(item)
@@ -80,6 +80,28 @@ class EditBackup(Restore):
                         raise BackupException('could not remove file: %s' % (e,))
             item.parent.entries.remove(item)
         self.write_file_list()
+
+    def purge(self):
+        """Remove the entire backup"""
+        # make the backup writeable
+        os.chmod(self.current_backup_path, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
+        # make all sub-directoris writable, needed for rmdir
+        for path, dirs, files in self.root.walk():
+            # directories need to be writeable
+            for directory in dirs:
+                directory.stat.mode |= stat.S_IWUSR
+                directory.stat.write(directory.backup_path, chmod_only=True)
+        # then remove the complete tree
+        shutil.rmtree(self.current_backup_path)
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def ask_the_question():
+    sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
+    if raw_input('Continue? [y/N] ').lower() != 'y':
+        sys.stderr.write('Aborted\n')
+        sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IMPLEMENTED_ACTIONS = ['rm']
@@ -109,10 +131,6 @@ def main():
 
     (options, args) = parser.parse_args(sys.argv[1:])
 
-    # XXX this is not good if the console is NOT utf-8 capable...
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
-
     b.optparse_evaluate(options)
 
 
@@ -127,19 +145,21 @@ def main():
                 parser.error('expected SRC')
             entry = b.root[args[0]] # XXX just test if it is there. catch ex and print error
             sys.stderr.write('Going to remove %s\n' % (filelist.escaped(entry.path),))
-            sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
-            if raw_input('Continue? [y/N] ').lower() != 'y':
-                sys.stderr.write('Aborted\n')
-                sys.exit(1)
+            ask_the_question()
             b.rm(args[0], options.recursive, options.force)
-        #~ elif action == 'purge':
+        elif action == 'purge':
+            if args:
+                parser.error('not expected any arguments')
+            sys.stderr.write('Going to remove the entire backup: %s\n' % (os.path.basename(b.current_backup_path),))
+            ask_the_question()
+            b.purge()
         #~ elif action == 'autopurge':
         else:
             parser.error('unknown ACTION: %r' % (action,))
     except KeyboardInterrupt:
         sys.stderr.write('\nAborted on user request.\n')
         sys.exit(1)
-    except BackupException as e:
+    except (KeyError, BackupException) as e:
         sys.stderr.write('ERROR: %s\n' % (e))
         sys.exit(1)
     t_end = time.time()

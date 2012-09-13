@@ -183,7 +183,7 @@ class Stat(object):
         else:
             self.flags = None
 
-    def write(self, path):
+    def write(self, path, chmod_only=False):
         """\
         Apply all stat info (mode bits, atime, mtime, flags) to path.
         Only useful when called on files but not on symlinks (links are ignored).
@@ -194,15 +194,16 @@ class Stat(object):
             #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
             #~ os.system('touch --no-dereference -r "%s" "%s"' % (escaped(self.path), escaped(dst))) # XXX insecure!
         else:
-            os.utime(path, (self.atime, self.mtime))
-            os.chown(path, self.uid, self.gid)
-            if hasattr(os, 'chflags'):
-                try:
-                    os.chflags(path, self.flags)
-                except OSError as why:
-                    if (not hasattr(errno, 'EOPNOTSUPP') or
-                        why.errno != errno.EOPNOTSUPP):
-                        raise
+            if not chmod_only:
+                os.utime(path, (self.atime, self.mtime))
+                os.chown(path, self.uid, self.gid)
+                if hasattr(os, 'chflags'):
+                    try:
+                        os.chflags(path, self.flags)
+                    except OSError as why:
+                        if (not hasattr(errno, 'EOPNOTSUPP') or
+                            why.errno != errno.EOPNOTSUPP):
+                            raise
             os.chmod(path, self.mode)
 
     def make_read_only(self, path):
