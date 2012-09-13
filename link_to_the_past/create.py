@@ -69,10 +69,11 @@ class Create(Backup):
         # count bytes and files to backup
         self.bytes_required = 0
         self.files_changed = 0
-        for item in self.source_root.flattened():
-            if item.changed and not isinstance(item, filelist.BackupDirectory):
-                self.bytes_required += item.stat.size
-                self.files_changed += 1 # XXX count dirs too?
+        for path, dirs, files in self.source_root.walk():
+            for entry in files:
+                if entry.changed:
+                    self.bytes_required += entry.stat.size
+                    self.files_changed += 1 # XXX count dirs too?
 
     def check_target(self):
         """Verify that the target is suitable for the backup"""
@@ -94,11 +95,13 @@ class Create(Backup):
         # find latest backup to work incrementally
         if not full_backup:
             self.find_latest_backup()
-            self.load_backup_file_list()
+            if self.last_backup_path is not None:
+                self.load_backup_file_list()
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
         logging.info('Need to copy %s in %d files' % (filelist.nice_bytes(self.bytes_required), self.files_changed))
+        #~ raw_input('type ENTER to execute')
         # check target
         self.check_target()
         if dry_run:
@@ -152,10 +155,6 @@ def main():
 
     (options, args) = parser.parse_args(sys.argv[1:])
 
-    # XXX this is not good if the console is NOT utf-8 capable...
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
-
     b.optparse_evaluate(options)
 
     parser.add_option("--test-internals",
@@ -172,6 +171,9 @@ def main():
         doctest.testmod()
         sys.exit(0)
 
+    # XXX this is not good if the console is NOT utf-8 capable...
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
 
     t_start = time.time()
     try:

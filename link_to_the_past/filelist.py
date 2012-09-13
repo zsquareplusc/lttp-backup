@@ -256,13 +256,13 @@ class BackupPath(object):
         return os.path.normpath(join(self.filelist.reference, self.path))
 
     def __str__(self):
-        return '%s %4s %4s %6s %s %s' % (
+        return '%s %4s %4s %7s %s %s' % (
                 mode_to_chars(self.stat.mode),
                 self.stat.uid,
                 self.stat.gid,
                 nice_bytes(self.stat.size),
                 time.strftime('%Y-%m-%d %02H:%02M:%02S', time.localtime(self.stat.mtime)),
-                self.path)
+                escaped(self.path))
 
     def __repr__(self):
         return '%s(%r)' % (self.__class__.__name__, self.path)

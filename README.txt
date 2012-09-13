@@ -85,11 +85,12 @@ actions:
     path                print the absolute path to the backup
     rm SRC              remove a file from the backup
     rm -r SRC           remove a directory and all its contents
+    purge               removes the complete backup
     verify [SRC]        compare files in the source location against the
-                        backup (hash)
+                        backup (also compare hashes)
     integrity           check all files within the backup for changes (compare
                         hashes)
-    compare [TIMESPEC]  compare two backups and list files
+    compare TIMESPEC    compare two backups and list differences
                         added/changed/removed
 
 Copy
@@ -115,6 +116,14 @@ sensitive content etc.).
 
 .. note:: It usually makes sense to add an ``exclude`` rule to the
           control file so that it is not included again in the next backup.
+
+Purge
+-----
+This command completely deletes a backup. The backup that is affected is
+selected with the ``-t`` option. There will be no way to get the files back!
+
+.. warning:: This destroys the complete backup, use with extreme care!
+
 
 timespec - time specifications
 ------------------------------
@@ -182,11 +191,11 @@ Backup control files
 
     Note that the cryptographic value is very limited as long as the file list
     is stored alongside the backup. To secure against intentional changes, the
-    file list has to be stored at a different, save location or has to be
+    file list has to be stored at a different, safe location or has to be
     protected by other means (e.g. PGP/gpg).
 
     CRC32 yields the shortest hash string which means the file list stays
-    smaller compared to the other algorithms.
+    smaller compared to the other algorithms, it is not cryptographic though.
 
 - xxx? ignore-mode, ignore-ids, always-copy <shell-pattern>
 
@@ -213,8 +222,6 @@ TODO and ideas
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
   - autoclean -> remove incomplete backups
-  - purge remove complete backups
-- differential time specs: lttp cat /some/file -t "1 month ago"
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
 - config file_
@@ -222,14 +229,7 @@ TODO and ideas
 - how to handle filenames with encoding errors?
 
 - idea for exclude pattern: "nobackup" in filename
-- rangliste der grössten files bei backup, frage befor start
-- checksumme für verify? disk errors...
-
-check_changes must use file list as lutime is not available and links will
-have wrong mtime
-
-smart compare of two trees
-- add, remove, change, same
+- rangliste der grössten files bei backup, frage bevor start
 
 
 
@@ -247,5 +247,3 @@ RestoreBackup
 CompareBackup
 - root1
 - root2
-
-ffi foe utimes call, os.system is insecure (filename escaping...)
