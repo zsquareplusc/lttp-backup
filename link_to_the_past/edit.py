@@ -18,6 +18,7 @@ backups the further back in time they were made.
 import shutil
 
 from restore import *
+from error import BackupException
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -43,34 +44,40 @@ class EditBackup(Restore):
     def write_file_list(self):
         """Write a new version of the file list"""
         with writeable(self.current_backup_path):
-            self.file_list.save(os.path.join(self.current_backup_path, 'file_list'))
+            self.root.save(os.path.join(self.current_backup_path, 'file_list'))
 
-    def rm(self, source, recursive=False):
+    def rm(self, source, recursive=False, force=False):
         """\
         Remove a file or a directory (if recursive flag is set).
         This will ultimately delete the file(s) from the backup!
         """
         item = self.root[source]
-        if isinstance(item, BackupDirectory):
+        if isinstance(item, filelist.BackupDirectory):
             if recursive:
                 # parent temporarily needs to be writeable to remove files
-                with writeable(item.parent.abs_path):
+                with writeable(item.parent.backup_path):
                     # make all sub-entries writable
                     for entry in item.flattened(include_self=True):
                         # directories need to be writeable
-                        if isinstance(entry, BackupDirectory):
+                        if isinstance(entry, filelist.BackupDirectory):
                             entry.st_mode |= stat.S_IWUSR
-                            entry.set_stat(entry.abs_path)
+                            entry.set_stat(entry.backup_path)
                     # then remove the complete sub-tree
-                    shutil.rmtree(item.abs_path)
+                    shutil.rmtree(item.backup_path)
                 item.parent.entries.remove(item)
             else:
-                raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
+                raise BackupException('will not work on directories in non-recursive mode: %r' % (filelist.escaped(source),))
         else:
             # parent temporarily needs to be writeable to remove files
-            with writeable(item.parent.abs_path):
+            with writeable(item.parent.backup_path):
                 #~ os.chmod(item.abs_path, stat.S_IWUSR|stat.S_IRUSR)
-                os.remove(item.abs_path)
+                try:
+                    os.remove(item.backup_path)
+                except OSError as e:
+                    if force:
+                        logging.warning('could not remove file: %s' % (e,))
+                    else:
+                        raise BackupException('could not remove file: %s' % (e,))
             item.parent.entries.remove(item)
         self.write_file_list()
 
@@ -84,6 +91,21 @@ def main():
     b = EditBackup()
     parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
     b.optparse_populate(parser)
+
+    group = optparse.OptionGroup(parser, 'File Selection')
+    group.add_option("-f", "--force",
+        dest = "force",
+        help = "enforce certain operations",
+        default = False,
+        action = 'store_true'
+    )
+    group.add_option("-r", "--recursive",
+        dest = "recursive",
+        help = "apply operation recursively to all subdirectories",
+        default = False,
+        action = 'store_true'
+    )
+    parser.add_option_group(group)
 
     (options, args) = parser.parse_args(sys.argv[1:])
 
@@ -103,12 +125,13 @@ def main():
         if action == 'rm':
             if len(args) != 1:
                 parser.error('expected SRC')
-            b.root[args[0]] # XXX just test if it is there. catch ex and print error
+            entry = b.root[args[0]] # XXX just test if it is there. catch ex and print error
+            sys.stderr.write('Going to remove %s\n' % (filelist.escaped(entry.path),))
             sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
-            if raw_input('Continue? [y/N]').lower() != 'y':
+            if raw_input('Continue? [y/N] ').lower() != 'y':
                 sys.stderr.write('Aborted\n')
                 sys.exit(1)
-            b.rm(args[0], options.recursive)
+            b.rm(args[0], options.recursive, options.force)
         #~ elif action == 'purge':
         #~ elif action == 'autopurge':
         else:

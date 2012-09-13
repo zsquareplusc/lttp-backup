@@ -599,7 +599,7 @@ class FileList(BackupDirectory):
         # rename. this ensures that the list is not lost, even if the write
         # fails.
         if os.path.exists(filename):
-            rename = filname
+            rename = filename
             filename = filename + '.new'
         else:
             rename = None
