@@ -71,38 +71,44 @@ def main():
     try:
         if action == 'integrity':
             # compare hashes in backup with saved file list
-            for item in b.root.flattened():
-                logging.debug('checking %s' % (item.path,))
-                status = 'OK'
-                if isinstance(item, filelist.BackupFile):
-                    if os.path.exists(item.backup_path):
-                        if not item.verify_hash(item.backup_path):
+            for path, dirs, files in b.root.walk():
+                for entry in dirs:
+                    logging.debug('checking %s' % (filelist.escaped(entry.path),))
+                    if not os.path.isdir(entry.backup_path):
+                        sys.stdout.write('MISSING %s\n' % (filelist.escaped(entry.path),))
+                for entry in files:
+                    logging.debug('checking %s' % (filelist.escaped(entry.path),))
+                    status = 'OK'
+                    if os.path.exists(entry.backup_path):
+                        if not entry.verify_hash(entry.backup_path):
                             status = 'CORRUPTED'
                     else:
                         status = 'MISSING'
-                elif isinstance(item, filelist.BackupDirectory):
-                    if not os.path.isdir(item.backup_path):
-                        status = 'MISSING'
-                if status:
-                    sys.stdout.write('%s %s\n' % (status, item.path))
+                    sys.stdout.write('%s %s\n' % (status, filelist.escaped(entry.path),))
         elif action == 'verify':
-            #~ # compare hashes in source with saved file list
+            # compare hashes in source with saved file list
+            # XXX allow '.' and find out which dir it is
             #~ if args:
                 #~ path = os.sep + args[0]
             #~ else:
                 #~ path = '*'
             scan = Create()
             scan.optparse_evaluate(options)
+            scan.source_root.set_hash(scan.hash_name)   # shoun't this be done automatically?
             scan.indexer.scan()
+            # XXX this calculates the hash of added files for which we can not compare the hash. wasted time :/
+            for path, dirs, files in scan.source_root.walk():
+                for entry in files:
+                    entry.update_hash_from_source()
             print_changes(scan.source_root.compare(b.root), options.long_format)
         elif action == 'changes':
             # compare changes between two backups
             if not args:
                 parser.error('Missing TIMESPEC of backup to compare')
-            # XXX "now" as word to scan sources instead of laoding a backup
             other_backup = Restore()
             other_backup.target_path = b.target_path
             if args[0] == 'now':
+                # "now" as word to scan sources instead of loading a backup
                 other_backup.scan_sources()
             else:
                 other_backup.find_backup_by_time(args[0])

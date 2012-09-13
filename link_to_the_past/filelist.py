@@ -139,10 +139,11 @@ def join(root, path):
 class CompareResult(object):
     """Store entry lists for compare operations."""
 
-    __slots__ = ('same', 'changed', 'changed_other', 'added', 'removed')
+    __slots__ = ('same', 'same_other', 'changed', 'changed_other', 'added', 'removed')
 
-    def __init__(self, same=None, changed=None, changed_other=None, added=None, removed=None):
+    def __init__(self, same=None, same_other=None, changed=None, changed_other=None, added=None, removed=None):
         self.same = same if same is not None else []
+        self.same_other = same_other if same_other is not None else []
         self.changed = changed if changed is not None else []
         self.changed_other = changed_other if changed_other is not None else []
         self.added = added if added is not None else []
@@ -352,10 +353,11 @@ class BackupFile(BackupPath):
         # nothing to do here as that was already done when creating
         # the backup
 
-    def verify_hash(self, path):
+
+    def _calculate_hash(self, path):
         """\
-        Compare given path by calculating the hash over the data.
-        Returns true when the calculated hash matches the stored one.
+        Calculate the hash of the file given as path. The hash value is
+        returned.
         """
         h = self.filelist.hash_factory()
         if os.path.islink(path):
@@ -367,7 +369,24 @@ class BackupFile(BackupPath):
                     if not block:
                         break
                     h.update(block)
-        return self.data_hash == h.hexdigest()
+        return h.hexdigest()
+
+    def update_hash_from_source(self):
+        """\
+        Calculate the hash over source_path and set data_hash to the new value.
+        Typically used to read in the hash of source files, e.g. for change
+        detection.
+        """
+        logging.debug('calculating hash of %s' % (escaped(self.source_path),))
+        self.data_hash = self._calculate_hash(self.source_path)
+
+    def verify_hash(self, path):
+        """\
+        Compare given path by calculating the hash over the data.
+        Returns true when the calculated hash matches the stored one.
+        """
+        #~ logging.debug('compare hash of %s to %s' % (escaped(self.path), escaped(path)))
+        return self.data_hash == self._calculate_hash(path)
 
     def verify_stat(self, path):
         """\
@@ -420,6 +439,7 @@ class BackupDirectory(BackupPath):
         logging.debug('new directory %s' % (escaped(self.path),))
         os.makedirs(dst)
         if recursive:
+            # XXX still copy files of a directory in non recusive mode
             for entry in self.entries:
                 if isinstance(entry, BackupDirectory):
                     entry.cp(os.path.join(dst, entry.name), permissions=permissions, recursive=True)
@@ -483,6 +503,7 @@ class BackupDirectory(BackupPath):
                     else:
                         if entry == ref_entry:
                             files.same.append(entry)
+                            files.same_other.append(ref_entry)
                         else:
                             files.changed.append(entry)
                             files.changed_other.append(ref_entry)
@@ -643,7 +664,7 @@ class FileListParser(config_file_parser.ContolFileParser):
         entry.stat.mtime = float(self.next_word())
         st_flags = self.next_word()
         if st_flags != '-':
-            entry.stat.flags = float(st_flags)
+            entry.stat.flags = int(st_flags)
         entry.data_hash = self.next_word()
         path = unescape(self.next_word())
         path, entry.name = os.path.split(path)

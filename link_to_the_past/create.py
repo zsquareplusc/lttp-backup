@@ -63,8 +63,9 @@ class Create(Backup):
             #~ self.source_root.print_listing()
             #~ self.backup_root.print_listing()
             for root, dirs, files in self.source_root.compare(self.backup_root):
-                for entry in files.same:
+                for entry, other_entry in zip(files.same, files.same_other):
                     entry.changed = False
+                    entry.data_hash = other_entry.data_hash
         # count bytes and files to backup
         self.bytes_required = 0
         self.files_changed = 0
@@ -103,7 +104,7 @@ class Create(Backup):
         if dry_run:
             for entry in self.source_root.flattened():
                 sys.stdout.write('%s %s\n' % (
-                        'C' if entry.changed else 'L',
+                        'COPY' if entry.changed else 'LINK',
                         entry,))
         else:
             # backup files

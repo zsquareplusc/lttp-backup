@@ -232,21 +232,6 @@ smart compare of two trees
 - add, remove, change, same
 
 
-BackupPath.__cmp__ -> compare stats
-BackupFile.check_changes() -> remove see compare
-
-BackupDirectory.compare() -> addedfiles, deletedfiles, changedfiles, addeddirs, deleteddirs, changeddirs
-- iterator over all possible? maybe not so easily
-- use this to compare source tree with old backup
-- default => changed
-- comparison detects sameness and clears changed flag
-
-FileList
-- hash
-- load
-- save
-  - if exists -> write w/ .new suffix, del, rename
-  - else write directly
 
 Indexer
 - excludes
