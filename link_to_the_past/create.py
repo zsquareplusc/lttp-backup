@@ -88,7 +88,7 @@ class Create(Backup):
         if t.f_favail < len(list(self.source_root.flattened())): # XXX call to "list" is bad
             raise BackupException('target file system will not allow to create that many files and directories')
 
-    def create(self, force=False, full_backup=False, dry_run=True):
+    def create(self, force=False, full_backup=False, dry_run=True, confirm=False):
         """Create a backup"""
         # find files to backup
         self.indexer.scan()
@@ -101,7 +101,8 @@ class Create(Backup):
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
         logging.info('Need to copy %s in %d files' % (filelist.nice_bytes(self.bytes_required), self.files_changed))
-        #~ raw_input('type ENTER to execute')
+        if confirm:
+            raw_input('type ENTER to execute')
         # check target
         self.check_target()
         if dry_run:
@@ -151,6 +152,12 @@ def main():
         default = False,
         action = 'store_true'
     )
+    group.add_option("--confirm",
+        dest = "confirm",
+        help = "after scanning, wait for confirmation by user",
+        default = False,
+        action = 'store_true'
+    )
     parser.add_option_group(group)
 
     (options, args) = parser.parse_args(sys.argv[1:])
@@ -177,7 +184,7 @@ def main():
 
     t_start = time.time()
     try:
-        b.create(options.force, options.full_backup, options.dry_run)
+        b.create(options.force, options.full_backup, options.dry_run, options.confirm)
     except KeyboardInterrupt:
         sys.stderr.write('\nAborted on user request.\n')
         sys.exit(1)
