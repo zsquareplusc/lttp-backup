@@ -111,6 +111,7 @@ class Create(Backup):
                         'COPY' if entry.changed else 'LINK',
                         entry,))
         else:
+            t_start = time.time()
             # backup files
             self.prepare_target()
             logging.debug('Copying/linking files')
@@ -121,6 +122,12 @@ class Create(Backup):
             for p in self.source_root.flattened():
                 p.secure_backup()
             self.finalize_target()
+            time_used = time.time() - t_start
+            logging.info('Copied %s in %.1f seconds = %s/s' % (
+                    filelist.nice_bytes(self.bytes_required),
+                    time_used,
+                    filelist.nice_bytes(self.bytes_required/time_used),
+                    ))
             logging.info('Created %s' % (self.base_name,))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
