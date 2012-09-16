@@ -116,11 +116,17 @@ class Create(Backup):
             self.prepare_target()
             logging.debug('Copying/linking files')
             for p in self.source_root.flattened():
-                p.create()
+                try:
+                    p.create()
+                except Exception as e:
+                    logging.error('Error backing up %s: %s' % (p, e))
             # secure directories (make then read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
-                p.secure_backup()
+                try:
+                    p.secure_backup()
+                except Exception as e:
+                    logging.error('Error securing %s: %s' % (p, e))
             self.finalize_target()
             time_used = time.time() - t_start
             logging.info('Copied %s in %.1f seconds = %s/s' % (

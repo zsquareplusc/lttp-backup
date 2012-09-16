@@ -333,14 +333,20 @@ class BackupFile(BackupPath):
     def _copy(self):
         """Create a copy of the file"""
         self.data_hash = self._copy_file(self.source_path, self.backup_path)
-        os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
-        self.stat.make_read_only(self.backup_path)
+        try:
+            os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
+            self.stat.make_read_only(self.backup_path)
+        except OSError:
+            logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
 
     def _link(self):
         """Create a hard link for the file"""
         logging.debug('hard linking %s' % (escaped(self.path),))
         os.link(self.source_path, self.backup_path)
-        self.stat.make_read_only(self.backup_path)
+        try:
+            self.stat.make_read_only(self.backup_path)
+        except OSError:
+            logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
 
     def create(self):
         """Backup the file, either by hard linking or copying"""
