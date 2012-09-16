@@ -48,6 +48,9 @@ incompatible.
   problem as making a backup certainly takes longer than that).
 
 
+.. note: Filenames with encoding errors are skipped!
+
+
 Command Line Tool
 =================
 
@@ -71,12 +74,12 @@ Restore Files
 -------------
 python -m link_to_the_past.restore -c CONFIGURATION ACTION [...]
 
-options:
+Options:
     -c CONFIGURATION    load given configuration file
     -t TIMESPEC         specify a backup, default (option not given, is to use
                         the latest backup)
 
-actions:
+Actions:
     list                list all backups
     ls [PATTERN]        list files of backup, optionally filtered by PATTERN
     cp SRC DST          copy a single file from the backup (SRC) to DST
@@ -226,7 +229,7 @@ TODO and ideas
   that change files, keeping the size and faking the mtime.
 - config file_
   - force-copy PATTERN
-- how to handle filenames with encoding errors?
+- how to handle filenames with encoding errors? => ignore! with warning
 
 - idea for exclude pattern: "nobackup" in filename
 - rangliste der grössten files bei backup, frage bevor start
