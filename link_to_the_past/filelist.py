@@ -251,7 +251,7 @@ class BackupPath(object):
         return self.path
 
     @property
-    def referece_path(self):
+    def reference_path(self):
         """Return absolute path to file relative to the reference"""
         return os.path.normpath(join(self.filelist.reference, self.path))
 
@@ -332,6 +332,7 @@ class BackupFile(BackupPath):
 
     def _copy(self):
         """Create a copy of the file"""
+        logging.debug('coyping %s' % (escaped(self.path),))
         self.data_hash = self._copy_file(self.source_path, self.backup_path)
         try:
             os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
@@ -342,7 +343,7 @@ class BackupFile(BackupPath):
     def _link(self):
         """Create a hard link for the file"""
         logging.debug('hard linking %s' % (escaped(self.path),))
-        os.link(self.source_path, self.backup_path)
+        os.link(self.reference_path, self.backup_path)
         try:
             self.stat.make_read_only(self.backup_path)
         except OSError:
