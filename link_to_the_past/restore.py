@@ -28,7 +28,7 @@ class Restore(Backup):
         self.root.load(os.path.join(self.current_backup_path, 'file_list'))
 
     def find_backup_by_time(self, timespec_str=None):
-        if timespec is None:
+        if timespec_str is None:
             name = self.find_latest_backup()
             self.current_backup_path = self.last_backup_path
         else:
