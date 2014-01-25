@@ -4,57 +4,92 @@
 
 Simple backup program.
 
-- Works incrementally while providing full backups at any time. Use hard links
-  to reference files from the previous backup, so each backup looks like a
-  full backup. While saving space on all the files that have not changed.
+The backup is always a simple copy of the files. This ensures that the backup
+can be used in any point in the future. Even if the backup program is lost or
+incompatible.
+
+Key Features
+------------
+
+- Works incrementally while providing full backups at any time. Uses hard
+  links to reference files from the previous backup, so each backup looks like
+  a full backup, while saving space on all the files that have not changed.
+
+- Changed files are copied entirely.
 
 - Check before doing. Available space and capability to create the required
   number of files is checked before the copying starts.
 
 - Does not rely on external tools (cp, rsync etc).
 
+
+More Features
+-------------
+
+- Checksums may be calculated on backed up files. This allows to verify the
+  backup (bad disk, modifications). It can also be used to check the
+  original files against a previous backup.
+
+- Files are checked by modification date and size.
+
 - Does not erase failed backup. It's your decision to delete these.
 
-Yes it not the first program of that kind. The reason it exists is that
-existing programs did not work well with some files or amount of data.
-There is no need to use rsync to make local copies. Analyzing the files takes
-more time than simply copying it.
+- File systems are not crossed. Use ``include`` directive in configuration
+  file to manually include the path or an ``exclude`` directive to suppress
+  the warning.
 
 
-The backup is always a simple copy of the files. This ensures that the backup
-can be used in any point in the future. Even if the backup program is lost or
-incompatible.
+Caveats
+-------
 
+- Special files (devices) are not backed up. This means this backup solution
+  is not suitable to secure the entire system. It's meant for user data.
 
-- Changed files are copied entirely.
-- Special files (devices) are not backed up.
-- File systems are not crossed file. Use ``include`` directive in
-  configuration file to manually include the path or an ``exclude`` directive
-  to suppress the warning.
-- Files are checked by modification date and size.
-- Backups are timestamped, you can not create more than one backup per second
-  :-)
-- Hard linked files only exist once on the disk. This is also a risk that when
-  it is damaged (disk errors, user manipulations), then the references in all
-  backups are also damages. To safeguard against this risk, create full
-  copies form time to time and/or use different disks to backup.
+- Files are checked by modification date and size. This is very fast to
+  determine if a file has been changed. However, there are programs that
+  reset the modification time even after modifications. Such files will
+  not be detected!
+
 - The target location needs to be in the file system. This tool does not
   support backing up via protocols like ssh, ftp etc. Typically the target
   will be a USB disk or memory stick but it also works well with storage in
   the network, e.g. a NAS mounted via NFS.
+
+- Hard linked files only exist once on the disk. This is also a risk that when
+  it is damaged (disk errors, manipulations), then the references in all
+  backups are also damaged. To safeguard against this risk, it is adviced to
+  create full copies from time to time and/or use different disks to backup.
+
+- Backups are timestamped, you can not create more than one backup per second
+  :-)
+
 - Time stamps are stored in microsecond resolution (some file systems allow
   higher accuracy, if this is need by the application, do not use this backup
-  tool). Change detection works at a resolution of 10µs (this should not be a
-  problem as making a backup certainly takes longer than that).
+  tool). Change detection works at a resolution of 10µs.
+
+- Currently does not restore permissions on soft-links. This is not so
+  critical as under normal use the permissions of a link are not used
+  anyway (only the permissions of the target).
+
+.. warning: Filenames with encoding errors are skipped! (A warning is printed)
 
 
-.. note: Filenames with encoding errors are skipped!
+Yes it not the first program of that kind. The reason it exists is that
+existing programs did, for me, not work well with some files or amount of
+data. There is no need to use rsync to make local copies. Analyzing the files
+often takes more time than simply copying it.
+
+File access is minimized as much as possible. Files in the backup are usually
+accessed one time (copy or link then set permissions, make read-only).
+Directories are accessed twice (create and in the end, make read-only).
+Checksums are calculated on the fly as files are copied, data is read/written
+exactly once.
 
 
 Command Line Tool
 =================
 
-general options:
+General options:
     -v                  make outputs more verbose, can be given multiple times
     -q                  switch off messages
     --debug             for the programmer: shows tracebacks for failures
@@ -70,12 +105,12 @@ options:
     --full              copy all items, do not depend on last backup.
     -f, --force         create backup anyway, even if no files have changed
 
+
 Restore Files
 -------------
 python -m link_to_the_past.restore -c CONFIGURATION ACTION [...]
 
 Options:
-    -c CONFIGURATION    load given configuration file
     -t TIMESPEC         specify a backup, default (option not given, is to use
                         the latest backup)
 
@@ -86,15 +121,47 @@ Actions:
     cp -r SRC DST       copy a directory recursively from the backup (SRC) to DST
     cat SRC             dump single file from the backup (SRC) to stdout
     path                print the absolute path to the backup
-    rm SRC              remove a file from the backup
-    rm -r SRC           remove a directory and all its contents
-    purge               removes the complete backup
-    verify [SRC]        compare files in the source location against the
+
+
+Compare Backups
+---------------
+These actions are used to compare two backups or a backup to the current
+files.
+
+
+python -m link_to_the_past.compare -c CONFIGURATION ACTION [...]
+
+Options:
+    -t TIMESPEC         specify a backup, default (option not given, is to use
+                        the latest backup)
+
+Actions:
+    verify              compare files in the source location against the
                         backup (also compare hashes)
     integrity           check all files within the backup for changes (compare
                         hashes)
-    compare TIMESPEC    compare two backups and list differences
+    changes TIMESPEC    compare two backups and list differences
                         added/changed/removed
+
+
+Change Backups
+--------------
+These operations alter previsously made backups. To be used with care!
+There are actions to remvoe files and/or directories from backups or
+remove entire backups.
+
+
+python -m link_to_the_past.edit -c CONFIGURATION ACTION [...]
+
+Options:
+    -t TIMESPEC         specify a backup, default (option not given, is to use
+                        the latest backup)
+
+Actions:
+    rm SRC              remove a file from the backup
+    rm -r SRC           remove a directory and all its contents
+    purge               removes the complete backup
+
 
 Copy
 ----
@@ -144,7 +211,8 @@ The -t option accepts the following expressions:
 - dates and times such as ``2012-04-01_1655``
 - partial dates also work, ``2012`` or ``2012-04`` because the time
   specification is simply matched against the name of the backup on the disk
-  and this name is simply the date/time strings as seen above.
+  and this name is simply the date/time strings as seen above. In case of
+  multiple matches the most recent one is picked.
 
 
 Profiles
@@ -224,16 +292,19 @@ TODO and ideas
 - commands
   - list one file in all backups
   - grep contents of [one] file[s] in all backups
+  - locate -> search for matching filenames
   - autoclean -> remove incomplete backups
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
 - config file_
   - force-copy PATTERN
-- how to handle filenames with encoding errors? => ignore! with warning
+  - enable-checksum PATTERN
 
 - idea for exclude pattern: "nobackup" in filename
 - rangliste der grössten files bei backup, frage bevor start
-
+- expand list command:
+  include date like, "this week", "monday, two weeks ago", "yesterday",
+  "today", "last month", "last year" etc.
 
 
 Indexer
