@@ -21,6 +21,15 @@ import indexer
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def len_iter(iterator):
+    """Count items in an iterator"""
+    n = 0
+    for item in iterator:
+        n += 1
+    return n
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 class Create(Backup):
     """Common backup description."""
     def __init__(self):
@@ -73,7 +82,7 @@ class Create(Backup):
             for entry in files:
                 if entry.changed:
                     self.bytes_required += entry.stat.size
-                    self.files_changed += 1 # XXX count dirs too?
+                    self.files_changed += 1
 
     def check_target(self):
         """Verify that the target is suitable for the backup"""
@@ -85,7 +94,7 @@ class Create(Backup):
                     filelist.nice_bytes(bytes_free),
                     filelist.nice_bytes(self.bytes_required),
                     ))
-        if t.f_favail < len(list(self.source_root.flattened())): # XXX call to "list" is bad
+        if t.f_favail < len_iter(self.source_root.flattened()):
             raise BackupException('target file system will not allow to create that many files and directories')
 
     def create(self, force=False, full_backup=False, dry_run=True, confirm=False):
@@ -97,6 +106,7 @@ class Create(Backup):
             self.find_latest_backup()
             if self.last_backup_path is not None:
                 self.load_backup_file_list()
+                self.source_root.reference = self.last_backup_path
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
@@ -112,6 +122,7 @@ class Create(Backup):
                         entry,))
         else:
             t_start = time.time()
+            bytes_copied = 0
             # backup files
             self.prepare_target()
             logging.debug('Copying/linking files')
@@ -120,7 +131,12 @@ class Create(Backup):
                     p.create()
                 except Exception as e:
                     logging.error('Error backing up %s: %s' % (p, e))
-            # secure directories (make then read-only too)
+                if p.changed and not isinstance(p, filelist.BackupDirectory):
+                    bytes_copied += p.stat.size
+                # XXX make this optional
+                if self.bytes_required:
+                    sys.stderr.write('%3d%%\r' % ((100.0*bytes_copied/self.bytes_required),))
+            # secure directories (make them read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
                 try:
