@@ -76,6 +76,10 @@ def get_by_timespec(backups, timespec):
         return backups[-2]
     elif timespec == 'first':
         return backups[0]
+    elif timespec.startswith('-'):
+        n = int(timespec)
+        if -len(backups) < n < 0:
+            return backups[n]
     else:
         # by absolute date, just compare strings
         latest_match = None
