@@ -1,6 +1,6 @@
-==================
- Link to the past
-==================
+=========================
+ Link To The Past Backup
+=========================
 
 Simple backup program.
 
@@ -20,7 +20,7 @@ Key Features
 - Check before doing. Available space and capability to create the required
   number of files is checked before the copying starts.
 
-- Does not rely on external tools (cp, rsync etc).
+- Does not rely on external tools (``cp``, ``rsync`` etc.).
 
 
 More Features
@@ -57,7 +57,7 @@ Caveats
 
 - Hard linked files only exist once on the disk. This is also a risk that when
   it is damaged (disk errors, manipulations), then the references in all
-  backups are also damaged. To safeguard against this risk, it is adviced to
+  backups are also damaged. To safeguard against this risk, it is advised to
   create full copies from time to time and/or use different disks to backup.
 
 - Backups are timestamped, you can not create more than one backup per second
@@ -71,12 +71,12 @@ Caveats
   critical as under normal use the permissions of a link are not used
   anyway (only the permissions of the target).
 
-.. warning: Filenames with encoding errors are skipped! (A warning is printed)
+.. warning:: Filenames with encoding errors are skipped! (A warning is printed)
 
 
 Yes it not the first program of that kind. The reason it exists is that
 existing programs did, for me, not work well with some files or amount of
-data. There is no need to use rsync to make local copies. Analyzing the files
+data. There is no need to use ``rsync`` to make local copies. Analyzing the files
 often takes more time than simply copying it.
 
 File access is minimized as much as possible. Files in the backup are usually
@@ -99,7 +99,7 @@ General options:
 
 Create Backups
 --------------
-python -m link_to_the_past.create -c CONFIGURATION
+``python -m link_to_the_past.create -c CONFIGURATION``
 
 options:
     --full              copy all items, do not depend on last backup.
@@ -108,7 +108,7 @@ options:
 
 Restore Files
 -------------
-python -m link_to_the_past.restore -c CONFIGURATION ACTION [...]
+``python -m link_to_the_past.restore -c CONFIGURATION ACTION [...]``
 
 Options:
     -t TIMESPEC         specify a backup, default (option not given, is to use
@@ -129,7 +129,7 @@ These actions are used to compare two backups or a backup to the current
 files.
 
 
-python -m link_to_the_past.compare -c CONFIGURATION ACTION [...]
+``python -m link_to_the_past.compare -c CONFIGURATION ACTION [...]``
 
 Options:
     -t TIMESPEC         specify a backup, default (option not given, is to use
@@ -146,12 +146,12 @@ Actions:
 
 Change Backups
 --------------
-These operations alter previsously made backups. To be used with care!
-There are actions to remvoe files and/or directories from backups or
+These operations alter previously made backups. To be used with care!
+There are actions to remove files and/or directories from backups or
 remove entire backups.
 
 
-python -m link_to_the_past.edit -c CONFIGURATION ACTION [...]
+``python -m link_to_the_past.edit -c CONFIGURATION ACTION [...]``
 
 Options:
     -t TIMESPEC         specify a backup, default (option not given, is to use
@@ -197,9 +197,9 @@ selected with the ``-t`` option. There will be no way to get the files back!
 
 timespec - time specifications
 ------------------------------
-The -t option accepts the following expressions:
+The ``-t`` option accepts the following expressions:
 
-- ``last`` the most recent backup, same as omitting -t
+- ``last`` the most recent backup, same as omitting ``-t``
 - ``previous`` one second most recent backup
 - ``first`` the first and oldest one
 - expressions ending in ``ago``, e.g.: ``1 hour ago``, ``1 day ago``
@@ -220,7 +220,8 @@ Profiles
 A profile is the same as a configuration file but located in a special place.
 The idea is to make it easier to work with multiple configurations.
 
-Without any -p or -c options, a default configuration is searched.
+Without any ``-p`` or ``-c`` options, a default configuration is searched.
+
 1) A file named ``default.profile`` in the current directory
 2) A file named ``default.profile`` in the users ``.link_to_the_past``
    directory
@@ -232,7 +233,7 @@ directory.
 
 Configuration file format
 =========================
-- # starts a comment, rest of line is ignored
+- ``#`` starts a comment, the rest of line is ignored
 - whitespace separated (spaces in filenames must be escaped as "\ ")
 - the order of the commands is irrelevant
 - xxx   line oriented
@@ -278,12 +279,12 @@ File Lists
     See also ``hash`` directive of the control file format above.
 
 ``p1 <mode> <uid> <gid> <size> <atime> <mtime> <flags> <hash> <path>``
-    - <flags> may be ´´-´´ if not supported
-    - directory or file etc. is determined by <mode>
-    - all fields except <hash> and <path> are decimal numbers, access and
+    - ``<flags>`` may be ``-`` if not supported
+    - directory or file etc. is determined by ``<mode>``
+    - all fields except ``<hash>`` and ``<path>`` are decimal numbers, access and
       modification times are floats the others integers.
-    - <path> must not contain spaces. escapes are allowed, including ´´\ ´´
-    - <hash> is a string of printable characters, e.g. 123ABC4D.
+    - ``<path>`` must not contain spaces. escapes are allowed, including ``"\ "``.
+    - ``<hash>`` is a string of printable characters, e.g. ``123ABC4D``.
       See also ``hash`` directive above.
 
 
@@ -296,7 +297,7 @@ TODO and ideas
   - autoclean -> remove incomplete backups
 - change detection via hash sums or other means? there may be applications
   that change files, keeping the size and faking the mtime.
-- config file_
+- config file
   - force-copy PATTERN
   - enable-checksum PATTERN
 

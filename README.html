@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>Link To The Past Backup</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7614 2013-02-21 15:55:51Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title, .code .error {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math, pre.code {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+pre.code .ln { color: grey; } /* line numbers */
+pre.code, code { background-color: #eeeeee }
+pre.code .comment, code .comment { color: #5C6576 }
+pre.code .keyword, code .keyword { color: #3B0D06; font-weight: bold }
+pre.code .literal.string, code .literal.string { color: #0C5404 }
+pre.code .name.builtin, code .name.builtin { color: #352B84 }
+pre.code .deleted, code .deleted { background-color: #DEB0A1}
+pre.code .inserted, code .inserted { background-color: #A3D289}
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+/* "booktabs" style (no vertical lines) */
+table.docutils.booktabs {
+  border: 0px;
+  border-top: 2px solid;
+  border-bottom: 2px solid;
+  border-collapse: collapse;
+}
+table.docutils.booktabs * {
+  border: 0px;
+}
+table.docutils.booktabs th {
+  border-bottom: thin solid;
+  text-align: left;
+}
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="link-to-the-past-backup">
+<h1 class="title">Link To The Past Backup</h1>
+
+<p>Simple backup program.</p>
+<p>The backup is always a simple copy of the files. This ensures that the backup
+can be used in any point in the future. Even if the backup program is lost or
+incompatible.</p>
+<div class="section" id="key-features">
+<h1>Key Features</h1>
+<ul class="simple">
+<li>Works incrementally while providing full backups at any time. Uses hard
+links to reference files from the previous backup, so each backup looks like
+a full backup, while saving space on all the files that have not changed.</li>
+<li>Changed files are copied entirely.</li>
+<li>Check before doing. Available space and capability to create the required
+number of files is checked before the copying starts.</li>
+<li>Does not rely on external tools (<tt class="docutils literal">cp</tt>, <tt class="docutils literal">rsync</tt> etc.).</li>
+</ul>
+</div>
+<div class="section" id="more-features">
+<h1>More Features</h1>
+<ul class="simple">
+<li>Checksums may be calculated on backed up files. This allows to verify the
+backup (bad disk, modifications). It can also be used to check the
+original files against a previous backup.</li>
+<li>Files are checked by modification date and size.</li>
+<li>Does not erase failed backup. It's your decision to delete these.</li>
+<li>File systems are not crossed. Use <tt class="docutils literal">include</tt> directive in configuration
+file to manually include the path or an <tt class="docutils literal">exclude</tt> directive to suppress
+the warning.</li>
+</ul>
+</div>
+<div class="section" id="caveats">
+<h1>Caveats</h1>
+<ul class="simple">
+<li>Special files (devices) are not backed up. This means this backup solution
+is not suitable to secure the entire system. It's meant for user data.</li>
+<li>Files are checked by modification date and size. This is very fast to
+determine if a file has been changed. However, there are programs that
+reset the modification time even after modifications. Such files will
+not be detected!</li>
+<li>The target location needs to be in the file system. This tool does not
+support backing up via protocols like ssh, ftp etc. Typically the target
+will be a USB disk or memory stick but it also works well with storage in
+the network, e.g. a NAS mounted via NFS.</li>
+<li>Hard linked files only exist once on the disk. This is also a risk that when
+it is damaged (disk errors, manipulations), then the references in all
+backups are also damaged. To safeguard against this risk, it is advised to
+create full copies from time to time and/or use different disks to backup.</li>
+<li>Backups are timestamped, you can not create more than one backup per second
+:-)</li>
+<li>Time stamps are stored in microsecond resolution (some file systems allow
+higher accuracy, if this is need by the application, do not use this backup
+tool). Change detection works at a resolution of 10µs.</li>
+<li>Currently does not restore permissions on soft-links. This is not so
+critical as under normal use the permissions of a link are not used
+anyway (only the permissions of the target).</li>
+</ul>
+<div class="warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Filenames with encoding errors are skipped! (A warning is printed)</p>
+</div>
+<p>Yes it not the first program of that kind. The reason it exists is that
+existing programs did, for me, not work well with some files or amount of
+data. There is no need to use <tt class="docutils literal">rsync</tt> to make local copies. Analyzing the files
+often takes more time than simply copying it.</p>
+<p>File access is minimized as much as possible. Files in the backup are usually
+accessed one time (copy or link then set permissions, make read-only).
+Directories are accessed twice (create and in the end, make read-only).
+Checksums are calculated on the fly as files are copied, data is read/written
+exactly once.</p>
+<div class="section" id="command-line-tool">
+<h2>Command Line Tool</h2>
+<dl class="docutils">
+<dt>General options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-v</span></kbd></td>
+<td>make outputs more verbose, can be given multiple times</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-q</span></kbd></td>
+<td>switch off messages</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">--debug</span></kbd></td>
+<td>for the programmer: shows tracebacks for failures</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-c <var>CONFIGURATION</var></span></kbd></td>
+</tr>
+<tr><td>&nbsp;</td><td>load given configuration file</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-p <var>PROFILENAME</var></span></kbd></td>
+<td>load given profile. profiles are configuration files
+in <tt class="docutils literal"><span class="pre">~/.link_to_the_past</span></tt>.</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="create-backups">
+<h1>Create Backups</h1>
+<p><tt class="docutils literal">python <span class="pre">-m</span> link_to_the_past.create <span class="pre">-c</span> CONFIGURATION</tt></p>
+<dl class="docutils">
+<dt>options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">--full</span></kbd></td>
+<td>copy all items, do not depend on last backup.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-f</span>, <span class="option">--force</span></kbd></td>
+<td>create backup anyway, even if no files have changed</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+<div class="section" id="restore-files">
+<h1>Restore Files</h1>
+<p><tt class="docutils literal">python <span class="pre">-m</span> link_to_the_past.restore <span class="pre">-c</span> CONFIGURATION ACTION <span class="pre">[...]</span></tt></p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-t <var>TIMESPEC</var></span></kbd></td>
+<td>specify a backup, default (option not given, is to use
+the latest backup)</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Actions:</dt>
+<dd>list                list all backups
+ls [PATTERN]        list files of backup, optionally filtered by PATTERN
+cp SRC DST          copy a single file from the backup (SRC) to DST
+cp -r SRC DST       copy a directory recursively from the backup (SRC) to DST
+cat SRC             dump single file from the backup (SRC) to stdout
+path                print the absolute path to the backup</dd>
+</dl>
+</div>
+<div class="section" id="compare-backups">
+<h1>Compare Backups</h1>
+<p>These actions are used to compare two backups or a backup to the current
+files.</p>
+<p><tt class="docutils literal">python <span class="pre">-m</span> link_to_the_past.compare <span class="pre">-c</span> CONFIGURATION ACTION <span class="pre">[...]</span></tt></p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-t <var>TIMESPEC</var></span></kbd></td>
+<td>specify a backup, default (option not given, is to use
+the latest backup)</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Actions:</dt>
+<dd><dl class="first last docutils">
+<dt>verify              compare files in the source location against the</dt>
+<dd>backup (also compare hashes)</dd>
+<dt>integrity           check all files within the backup for changes (compare</dt>
+<dd>hashes)</dd>
+<dt>changes TIMESPEC    compare two backups and list differences</dt>
+<dd>added/changed/removed</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="change-backups">
+<h1>Change Backups</h1>
+<p>These operations alter previously made backups. To be used with care!
+There are actions to remove files and/or directories from backups or
+remove entire backups.</p>
+<p><tt class="docutils literal">python <span class="pre">-m</span> link_to_the_past.edit <span class="pre">-c</span> CONFIGURATION ACTION <span class="pre">[...]</span></tt></p>
+<dl class="docutils">
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-t <var>TIMESPEC</var></span></kbd></td>
+<td>specify a backup, default (option not given, is to use
+the latest backup)</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Actions:</dt>
+<dd>rm SRC              remove a file from the backup
+rm -r SRC           remove a directory and all its contents
+purge               removes the complete backup</dd>
+</dl>
+</div>
+<div class="section" id="copy">
+<h1>Copy</h1>
+<p>The <tt class="docutils literal">cp</tt> action copies files or directories from the backup to the given
+destination. This is a convenient way to restore files in to a new location.</p>
+<p>If the destination is a directory, the name of the source is used as name for the
+file or directory that is being restored within given destination.</p>
+<p><tt class="docutils literal">cp</tt> restores the original permissions of the file.</p>
+<div class="warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Existing a file or directory with the same name will be overwritten!</p>
+</div>
+</div>
+<div class="section" id="remove">
+<h1>Remove</h1>
+<p>The <tt class="docutils literal">rm</tt> action deletes files from the backup. Its purpose is to remove
+items that have been accidentally backed up (e.g. temporary files, caches,
+sensitive content etc.).</p>
+<div class="warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This destroys the files in the backup, use with extreme care!</p>
+</div>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<p class="last">It usually makes sense to add an <tt class="docutils literal">exclude</tt> rule to the
+control file so that it is not included again in the next backup.</p>
+</div>
+</div>
+<div class="section" id="purge">
+<h1>Purge</h1>
+<p>This command completely deletes a backup. The backup that is affected is
+selected with the <tt class="docutils literal"><span class="pre">-t</span></tt> option. There will be no way to get the files back!</p>
+<div class="warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This destroys the complete backup, use with extreme care!</p>
+</div>
+</div>
+<div class="section" id="timespec-time-specifications">
+<h1>timespec - time specifications</h1>
+<p>The <tt class="docutils literal"><span class="pre">-t</span></tt> option accepts the following expressions:</p>
+<ul class="simple">
+<li><tt class="docutils literal">last</tt> the most recent backup, same as omitting <tt class="docutils literal"><span class="pre">-t</span></tt></li>
+<li><tt class="docutils literal">previous</tt> one second most recent backup</li>
+<li><tt class="docutils literal">first</tt> the first and oldest one</li>
+<li>expressions ending in <tt class="docutils literal">ago</tt>, e.g.: <tt class="docutils literal">1 hour ago</tt>, <tt class="docutils literal">1 day ago</tt>
+supported units are <tt class="docutils literal">hour</tt>, <tt class="docutils literal">day</tt>, <tt class="docutils literal">week</tt>, <tt class="docutils literal">month</tt>, <tt class="docutils literal">year</tt> as well
+as each of them in plural form with a <tt class="docutils literal">s</tt> appended. The amount must be a
+positive integer number (&gt; 0).</li>
+<li><tt class="docutils literal">yesterday</tt> is the same as <tt class="docutils literal">1 day ago</tt></li>
+<li>dates such as <tt class="docutils literal"><span class="pre">2012-04-01</span></tt></li>
+<li>dates and times such as <tt class="docutils literal"><span class="pre">2012-04-01_1655</span></tt></li>
+<li>partial dates also work, <tt class="docutils literal">2012</tt> or <tt class="docutils literal"><span class="pre">2012-04</span></tt> because the time
+specification is simply matched against the name of the backup on the disk
+and this name is simply the date/time strings as seen above. In case of
+multiple matches the most recent one is picked.</li>
+</ul>
+<div class="section" id="profiles">
+<h2>Profiles</h2>
+<p>A profile is the same as a configuration file but located in a special place.
+The idea is to make it easier to work with multiple configurations.</p>
+<p>Without any <tt class="docutils literal"><span class="pre">-p</span></tt> or <tt class="docutils literal"><span class="pre">-c</span></tt> options, a default configuration is searched.</p>
+<ol class="arabic simple">
+<li>A file named <tt class="docutils literal">default.profile</tt> in the current directory</li>
+<li>A file named <tt class="docutils literal">default.profile</tt> in the users <tt class="docutils literal">.link_to_the_past</tt>
+directory</li>
+</ol>
+<p>Named profiles are loaded with the <tt class="docutils literal"><span class="pre">-p</span> &lt;name&gt;</tt> option. A file
+<tt class="docutils literal"><span class="pre">&lt;name&gt;.profile</span></tt> is searched in the users <tt class="docutils literal">.link_to_the_past</tt>
+directory.</p>
+</div>
+<div class="section" id="configuration-file-format">
+<h2>Configuration file format</h2>
+<ul class="simple">
+<li><tt class="docutils literal">#</tt> starts a comment, the rest of line is ignored</li>
+<li>whitespace separated (spaces in filenames must be escaped as &quot;&quot;)</li>
+<li>the order of the commands is irrelevant</li>
+<li>xxx   line oriented</li>
+<li>xxx  continues a [virtual] line.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="backup-control-files">
+<h1>Backup control files</h1>
+<dl class="docutils">
+<dt><tt class="docutils literal">include &lt;path&gt;</tt></dt>
+<dd>adds the path to the backup</dd>
+<dt><tt class="docutils literal">exclude <span class="pre">&lt;shell-pattern&gt;</span></tt></dt>
+<dd>excludes files and directories matching the pattern</dd>
+<dt><tt class="docutils literal">load_config &lt;path&gt;</tt></dt>
+<dd>Load an other configuration file. This may be useful if a common excludes
+list is (re-)used in different configuration files.</dd>
+<dt><tt class="docutils literal">hash &lt;name&gt;</tt></dt>
+<dd><p class="first">Specify the hash function to use. No hashing will be performed if the
+directive is absent.</p>
+<p>Available hash functions:
+- CRC32 (non-cryptographic)
+- SHA-256
+- SHA-512
+- MD5 (collisions known)</p>
+<p>Note that the cryptographic value is very limited as long as the file list
+is stored alongside the backup. To secure against intentional changes, the
+file list has to be stored at a different, safe location or has to be
+protected by other means (e.g. PGP/gpg).</p>
+<p class="last">CRC32 yields the shortest hash string which means the file list stays
+smaller compared to the other algorithms, it is not cryptographic though.</p>
+</dd>
+</dl>
+<ul class="simple">
+<li>xxx? ignore-mode, ignore-ids, always-copy &lt;shell-pattern&gt;</li>
+</ul>
+</div>
+<div class="section" id="file-lists">
+<h1>File Lists</h1>
+<dl class="docutils">
+<dt><tt class="docutils literal">hash &lt;name&gt;</tt></dt>
+<dd>Specify the hash function to use.
+See also <tt class="docutils literal">hash</tt> directive of the control file format above.</dd>
+<dt><tt class="docutils literal">p1 &lt;mode&gt; &lt;uid&gt; &lt;gid&gt; &lt;size&gt; &lt;atime&gt; &lt;mtime&gt; &lt;flags&gt; &lt;hash&gt; &lt;path&gt;</tt></dt>
+<dd><ul class="first last simple">
+<li><tt class="docutils literal">&lt;flags&gt;</tt> may be <tt class="docutils literal">-</tt> if not supported</li>
+<li>directory or file etc. is determined by <tt class="docutils literal">&lt;mode&gt;</tt></li>
+<li>all fields except <tt class="docutils literal">&lt;hash&gt;</tt> and <tt class="docutils literal">&lt;path&gt;</tt> are decimal numbers, access and
+modification times are floats the others integers.</li>
+<li><tt class="docutils literal">&lt;path&gt;</tt> must not contain spaces. escapes are allowed, including <tt class="docutils literal">&quot;\ &quot;</tt>.</li>
+<li><tt class="docutils literal">&lt;hash&gt;</tt> is a string of printable characters, e.g. <tt class="docutils literal">123ABC4D</tt>.
+See also <tt class="docutils literal">hash</tt> directive above.</li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="todo-and-ideas">
+<h2>TODO and ideas</h2>
+<ul class="simple">
+<li>commands
+- list one file in all backups
+- grep contents of [one] file[s] in all backups
+- locate -&gt; search for matching filenames
+- autoclean -&gt; remove incomplete backups</li>
+<li>change detection via hash sums or other means? there may be applications
+that change files, keeping the size and faking the mtime.</li>
+<li>config file
+- force-copy PATTERN
+- enable-checksum PATTERN</li>
+<li>idea for exclude pattern: &quot;nobackup&quot; in filename</li>
+<li>rangliste der grössten files bei backup, frage bevor start</li>
+<li>expand list command:
+include date like, &quot;this week&quot;, &quot;monday, two weeks ago&quot;, &quot;yesterday&quot;,
+&quot;today&quot;, &quot;last month&quot;, &quot;last year&quot; etc.</li>
+</ul>
+<p>Indexer
+- excludes
+- includes</p>
+<p>CreateBackup
+- source_root
+- backup_root</p>
+<p>RestoreBackup
+- backup_root</p>
+<p>CompareBackup
+- root1
+- root2</p>
+</div>
+</div>
+</div>
+</body>
+</html>
