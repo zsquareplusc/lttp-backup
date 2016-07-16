@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -17,8 +17,8 @@ backups the further back in time they were made.
 
 import shutil
 
-from restore import *
-from error import BackupException
+from .restore import *
+from .error import BackupException
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

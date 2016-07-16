@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -12,10 +12,8 @@ import stat
 import fnmatch
 import logging
 
-import config_file_parser
-import filelist
-import timespec
-from backup import *
+from . import config_file_parser, filelist, timespec
+from .backup import *
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

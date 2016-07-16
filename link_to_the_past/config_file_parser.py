@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2012 Chris Liechti <cliechti@gmx.net>
@@ -12,6 +12,9 @@ import os
 import codecs
 import re
 import logging
+
+if sys.version_info >= (3,):
+    unicode = str
 
 m_comment = re.compile('(#.*$)', re.UNICODE)    # regexp to remove line comments
 
@@ -98,8 +101,8 @@ if __name__ == '__main__':
     b = Backup()
     p = BackupControl(b)
     p.parse(words_in_file(sys.argv[1]))
-    print b
-    print b.source_locations
-    print b.source_locations[-1].excludes
+    print(b)
+    print(b.source_locations)
+    print(b.source_locations[-1].excludes)
 
 

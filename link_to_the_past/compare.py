@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -8,9 +8,9 @@ Compare backups and sources.
 (C) 2012 cliechti@gmx.net
 """
 
-from restore import *
-from create import *
-import filelist
+from .restore import *
+from .create import *
+from . import filelist
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def print_changes(iterator, long_format):

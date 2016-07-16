@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -9,7 +9,7 @@ Parse time specification for locating old backups.
 """
 import datetime
 
-from error import BackupException
+from .error import BackupException
 
 
 def get_limit(timespec, now=None):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -13,8 +13,8 @@ import fnmatch
 import stat
 import logging
 
-import filelist
-from error import BackupException
+from . import filelist
+from .error import BackupException
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     i.excludes.append(ShellPattern('*.bak'))
     i.scan()
     for entry in i.root.flattened():
-        print entry
+        print(entry)
 
     #~ import doctest
     #~ doctest.testmod()

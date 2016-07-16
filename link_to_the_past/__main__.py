@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -25,6 +25,8 @@ def main():
             return restore.main()
     sys.stderr.write('Usage: %s [options] ACTION [...]\n\n' % (sys.argv[0],))
     sys.stderr.write('%s: error: missing ACTION\n' % (sys.argv[0],))
+    sys.stderr.write('possible actions are: %s\n' % ' '.join(edit.IMPLEMENTED_ACTIONS +
+        compare.IMPLEMENTED_ACTIONS + restore.IMPLEMENTED_ACTIONS))
     sys.exit(1)
 
 

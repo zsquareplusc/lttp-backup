@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -14,10 +14,8 @@ import glob
 import shutil
 import logging
 
-import config_file_parser
-from backup import *
-import filelist
-import indexer
+from . import config_file_parser, filelist, indexer
+from .backup import *
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

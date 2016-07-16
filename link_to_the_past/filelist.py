@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """\
 Link To The Past - a backup tool
@@ -26,8 +26,7 @@ import fnmatch
 import stat
 import logging
 
-import config_file_parser
-import hashes
+from . import config_file_parser, hashes
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EXPONENTS = ('', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
@@ -685,7 +684,7 @@ if __name__ == '__main__':
     f = FileList()
     f.load('test/example_backups/2012-09-07_043453/file_list')
     for entry in f.flattened():
-        print entry
+        print(entry)
 
     import doctest
     doctest.testmod()
