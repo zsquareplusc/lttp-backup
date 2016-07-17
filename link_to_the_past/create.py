@@ -85,6 +85,8 @@ class Create(Backup):
     def check_target(self):
         """Verify that the target is suitable for the backup"""
         # check target path
+        if not os.path.exists(self.target_path):
+            os.mkdir(self.target_path)
         t = os.statvfs(self.target_path)
         bytes_free = t.f_bsize * t.f_bavail
         if bytes_free < self.bytes_required:
@@ -110,7 +112,7 @@ class Create(Backup):
             raise BackupException('No changes detected, no need to backup')
         logging.info('Need to copy %s in %d files' % (filelist.nice_bytes(self.bytes_required), self.files_changed))
         if confirm:
-            raw_input('type ENTER to execute')
+            input('type ENTER to execute')
         # check target
         self.check_target()
         if dry_run:
@@ -128,7 +130,8 @@ class Create(Backup):
                 try:
                     p.create()
                 except Exception as e:
-                    logging.error('Error backing up %s: %s' % (p, e))
+                    logging.exception('Error backing up %s: %s' % (p, e))
+                    #~ logging.error('Error backing up %s: %s' % (p, e))
                 if p.changed and not isinstance(p, filelist.BackupDirectory):
                     bytes_copied += p.stat.size
                 # XXX make this optional
@@ -204,10 +207,6 @@ def main():
         import doctest
         doctest.testmod()
         sys.exit(0)
-
-    # XXX this is not good if the console is NOT utf-8 capable...
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
 
     t_start = time.time()
     try:

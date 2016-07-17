@@ -13,17 +13,14 @@ import codecs
 import re
 import logging
 
-if sys.version_info >= (3,):
-    unicode = str
-
 m_comment = re.compile('(#.*$)', re.UNICODE)    # regexp to remove line comments
 
-class Word(unicode):
+class Word(str):
     """\
     Like a string but annotated with the position in the source file it was read from.
     """
     def __new__(cls, word, filename, lineno, text):
-        self = unicode.__new__(cls, word)
+        self = str.__new__(cls, word)
         self.filename = filename
         self.lineno = lineno
         self.text = text
@@ -31,7 +28,7 @@ class Word(unicode):
 
     def __repr__(self):
         return "Word(%s, %r, %r)" % (
-                unicode.__repr__(self),
+                str.__repr__(self),
                 self.filename,
                 self.lineno)
 
@@ -68,7 +65,7 @@ class ContolFileParser(object):
         self._iterator = None
 
     def next_word(self):
-        return self._iterator.next()
+        return self._iterator.__next__()
 
     def interpret(self, word):
         a = 'word_%s' % (word,)
@@ -104,5 +101,4 @@ if __name__ == '__main__':
     print(b)
     print(b.source_locations)
     print(b.source_locations[-1].excludes)
-
 

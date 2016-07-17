@@ -113,6 +113,15 @@ def mode_to_chars(mode):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+ESCAPE_CONTROLS = dict((k, repr(chr(k))[1:-1]) for k in range(32))
+ESCAPE_CONTROLS[0] = r'\0'
+ESCAPE_CONTROLS[7] = r'\a'
+ESCAPE_CONTROLS[8] = r'\b'
+ESCAPE_CONTROLS[11] = r'\v'
+ESCAPE_CONTROLS[12] = r'\f'
+ESCAPE_CONTROLS[32] = r'\ '
+ESCAPE_CONTROLS[ord('\\')] = '\\\\'
+
 def escaped(path):
     """\
     Escape control non printable characters and the space.
@@ -124,11 +133,11 @@ def escaped(path):
     >>> escaped(u'\u2000')
     '\\\\u2000'
     """
-    return path.encode('unicode-escape').replace(' ', '\\ ')
+    return path.translate(ESCAPE_CONTROLS)
 
 def unescape(path):
     """Escape control non printable characters and the space"""
-    return path.decode('unicode-escape').replace('\\ ', ' ')
+    return codecs.decode(path, 'unicode-escape').replace('\\ ', ' ')
 
 def join(root, path):
     return os.path.normpath('%s%s%s' % (root, os.sep, path))
@@ -316,7 +325,7 @@ class BackupFile(BackupPath):
         h = self.filelist.hash_factory()
         if os.path.islink(src):
             linkto = os.readlink(src)
-            h.update(linkto)
+            h.update(linkto.encode('utf-8'))
             os.symlink(linkto, dst)
         else:
             with open(src, 'rb') as f_src:
@@ -334,10 +343,11 @@ class BackupFile(BackupPath):
         logging.debug('coyping %s' % (escaped(self.path),))
         self.data_hash = self._copy_file(self.source_path, self.backup_path)
         try:
-            os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
+            os.utime(self.backup_path, (self.stat.atime, self.stat.mtime), follow_symlinks=False)
             self.stat.make_read_only(self.backup_path)
         except OSError:
-            logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
+            logging.exception('Error setting stats on %s' % (escaped(self.backup_path),))
+            #~ logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
 
     def _link(self):
         """Create a hard link for the file"""
@@ -368,7 +378,7 @@ class BackupFile(BackupPath):
         """
         h = self.filelist.hash_factory()
         if os.path.islink(path):
-            h.update(os.readlink(path))
+            h.update(os.readlink(path).encode('utf-8'))
         else:
             with open(path, 'rb') as f_src:
                 while True:

@@ -42,10 +42,7 @@ class Location(object):
     def _scan(self, indexer, parent, device):
         """scan recursively and handle excluded files and directories on the fly"""
         logging.debug('scanning %r' % (parent.path,))
-        for name in os.listdir(unicode(parent.path)):
-            if isinstance(name, str):
-                logging.error('encoding error in filename, file is NOT included in backup: %s/%r' % (parent.path, name,))
-                continue
+        for name in os.listdir(parent.path):
             path = os.path.join(parent.path, name)
             if indexer.is_included(path):
                 #~ logging.debug('is included %r' % (path,))

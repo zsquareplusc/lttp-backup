@@ -16,7 +16,7 @@ class CRC32Hash(object):
     CRC32 API compatible to the hashlib functions (subset used by this program).
 
     >>> h = CRC32Hash()
-    >>> h.update('Hello World')
+    >>> h.update(b'Hello World')
     >>> h.hexdigest()
     '4a17b156'
     """
@@ -35,8 +35,8 @@ class NoHash(object):
     """\
     API compatible to the hashlib functions (subset used by this program).
 
-    >>> h = CRC32Hash()
-    >>> h.update('Hello World')
+    >>> h = NoHash()
+    >>> h.update(b'Hello World')
     >>> h.hexdigest()
     '-'
     """
@@ -65,7 +65,7 @@ def get_factory(name):
     Get an object for calculating a hash.
     >>> f = get_factory('SHA-256')
     >>> h = f()
-    >>> h.update('Hello World')
+    >>> h.update(b'Hello World')
     >>> h.hexdigest()
     'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
     """

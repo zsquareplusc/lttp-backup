@@ -99,12 +99,12 @@ class EditBackup(Restore):
 
 def ask_the_question():
     sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
-    if raw_input('Continue? [y/N] ').lower() != 'y':
+    if input('Continue? [y/N] ').lower() != 'y':
         sys.stderr.write('Aborted\n')
         sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IMPLEMENTED_ACTIONS = ['rm']
+IMPLEMENTED_ACTIONS = ['rm', 'purge']
 
 def main():
     import optparse

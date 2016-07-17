@@ -92,10 +92,6 @@ def main():
 
     (options, args) = parser.parse_args(sys.argv[1:])
 
-    # XXX this is not good if the console is NOT utf-8 capable...
-    sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf-8')(sys.stderr)
-
     b.optparse_evaluate(options)
 
 
