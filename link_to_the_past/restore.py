@@ -32,9 +32,12 @@ class Restore(Backup):
         else:
             name = timespec.get_by_timespec(self.find_backups(), timespec_str)
             self.current_backup_path = os.path.join(self.target_path, name)
-        logging.info('Active backup: %s' % (name,))
-        self.load_file_list()
-        self.root.root = self.current_backup_path
+        if self.current_backup_path is not None:
+            logging.info('Active backup: %s' % (name,))
+            self.load_file_list()
+            self.root.root = self.current_backup_path
+        else:
+            logging.warning('No backup found')
 
 
     def cp(self, source, destination, recursive=False):
