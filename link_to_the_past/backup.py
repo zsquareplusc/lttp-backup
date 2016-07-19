@@ -102,23 +102,14 @@ class Backup(object):
         )
         parser.add_option_group(group)
 
-    def optparse_evaluate(self, options):
+    def evaluate_arguments(self, args):
         """Apply the effects of the common options"""
-        if options.verbosity > 1:
-            level = logging.DEBUG
-        elif options.verbosity:
-            level = logging.INFO
-        else:
-            level = logging.ERROR
-        logging.basicConfig(level=level)
-
-        if options.control is None:
-            if options.profile is not None:
-                options.control = profile.get_named_profile(options.profile)
-            else:
-                options.control = profile.get_default_profile()
+        if args.profile is not None:
+            args.control = profile.get_named_profile(args.profile)
+        if args.control is None:
+            args.control = profile.get_default_profile()
         try:
-            self.load_configuration(options.control)
+            self.load_configuration(args.control)
         except IOError as e:
             sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
             sys.exit(1)

@@ -104,67 +104,41 @@ def ask_the_question():
         sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IMPLEMENTED_ACTIONS = ['rm', 'purge']
 
-def main():
-    import optparse
-    import sys
-
+def action_rm(args):
     b = EditBackup()
-    parser = optparse.OptionParser(usage='%prog [options] ACTION [...]')
-    b.optparse_populate(parser)
-
-    group = optparse.OptionGroup(parser, 'File Selection')
-    group.add_option("-f", "--force",
-        dest = "force",
-        help = "enforce certain operations",
-        default = False,
-        action = 'store_true'
-    )
-    group.add_option("-r", "--recursive",
-        dest = "recursive",
-        help = "apply operation recursively to all subdirectories",
-        default = False,
-        action = 'store_true'
-    )
-    parser.add_option_group(group)
-
-    (options, args) = parser.parse_args(sys.argv[1:])
-
-    b.optparse_evaluate(options)
+    b.evaluate_arguments(args)
+    entry = b.root[args.SRC]  # XXX just test if it is there. catch ex and print error
+    sys.stderr.write('Going to remove %s\n' % (filelist.escaped(entry.path),))
+    ask_the_question()
+    b.rm(args.SRC, args.recursive, args.force)
 
 
-    if not args:
-        parser.error('Expected ACTION')
-    action = args.pop(0)
-
-    t_start = time.time()
-    try:
-        if action == 'rm':
-            if len(args) != 1:
-                parser.error('expected SRC')
-            entry = b.root[args[0]] # XXX just test if it is there. catch ex and print error
-            sys.stderr.write('Going to remove %s\n' % (filelist.escaped(entry.path),))
-            ask_the_question()
-            b.rm(args[0], options.recursive, options.force)
-        elif action == 'purge':
-            if args:
-                parser.error('not expected any arguments')
-            sys.stderr.write('Going to remove the entire backup: %s\n' % (os.path.basename(b.current_backup_path),))
-            ask_the_question()
-            b.purge()
-        #~ elif action == 'autopurge':
-        else:
-            parser.error('unknown ACTION: %r' % (action,))
-    except KeyboardInterrupt:
-        sys.stderr.write('\nAborted on user request.\n')
-        sys.exit(1)
-    except (KeyError, BackupException) as e:
-        sys.stderr.write('ERROR: %s\n' % (e))
-        sys.exit(1)
-    t_end = time.time()
-    logging.info('Action took %.1f seconds' % ((t_end - t_start),))
+def action_purge(args):
+    b = EditBackup()
+    b.evaluate_arguments(args)
+    sys.stderr.write('Going to remove the entire backup: %s\n' % (os.path.basename(b.current_backup_path),))
+    ask_the_question()
+    b.purge()
 
 
-if __name__ == '__main__':
-    main()
+def update_argparse(subparsers):
+    """Add a subparser for the actions provided by this module"""
+    parser = subparsers.add_parser('rm')
+    parser.add_argument('SRC')
+    group = parser.add_argument_group('File Selection')
+    group.add_argument("-f", "--force",
+        help="enforce certain operations",
+        default=False,
+        action='store_true')
+    group.add_argument("-r", "--recursive",
+        help="apply operation recursively to all subdirectories",
+        default=False,
+        action='store_true')
+    Restore.populate_arguments(parser)
+    parser.set_defaults(func=action_rm)
+
+    parser = subparsers.add_parser('purge')
+    Restore.populate_arguments(parser)
+    parser.set_defaults(func=action_purge)
+

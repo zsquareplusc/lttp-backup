@@ -155,71 +155,41 @@ class Create(Backup):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def action_create(args):
+    b = Create()
+    b.evaluate_arguments(args)
+    b.create(args.force, args.full, args.dry_run, args.confirm)
+
+
+def update_argparse(subparsers):
+    """Add a subparser for the actions provided by this module"""
+    parser = subparsers.add_parser('create')
+    group = parser.add_argument_group('Backup Options')
+    group.add_argument("-f", "--force",
+        help="enforce certain operations (e.g. making a backup even if there are no changes)",
+        default=False,
+        action='store_true')
+    group.add_argument("--full",
+        help="always create copy (do not use previous backup to hard link)",
+        default=False,
+        action='store_true')
+    group.add_argument("--dry-run",
+        help="do not actually create a backup, only scan the source",
+        default=False,
+        action='store_true')
+    group.add_argument("--confirm",
+        help="after scanning, wait for confirmation by user",
+        default=False,
+        action='store_true')
+    parser.set_defaults(func=action_create)
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 def main():
     import sys
-    import optparse
-
-    b = Create()
-    parser = optparse.OptionParser(usage='%prog [options]')
-    b.optparse_populate(parser)
-
-    group = optparse.OptionGroup(parser, 'Backup Options')
-    group.add_option("-f", "--force",
-        dest = "force",
-        help = "enforce certain operations (e.g. making a backup even if there are no changes)",
-        default = False,
-        action = 'store_true'
-    )
-    group.add_option("--full",
-        dest = "full_backup",
-        help = "always create copy (do not use previous backup to hard link)",
-        default = False,
-        action = 'store_true'
-    )
-    group.add_option("--dry-run",
-        dest = "dry_run",
-        help = "do not actually create a backup, only scan the source",
-        default = False,
-        action = 'store_true'
-    )
-    group.add_option("--confirm",
-        dest = "confirm",
-        help = "after scanning, wait for confirmation by user",
-        default = False,
-        action = 'store_true'
-    )
-    parser.add_option_group(group)
-
-    (options, args) = parser.parse_args(sys.argv[1:])
-
-    b.optparse_evaluate(options)
-
-    parser.add_option("--test-internals",
-        dest = "doctest",
-        help = "Run internal tests",
-        default = False,
-        action = 'store_true'
-    )
-    (options, args) = parser.parse_args(sys.argv[1:])
-
-
-    if options.doctest:
-        import doctest
-        doctest.testmod()
-        sys.exit(0)
-
-    t_start = time.time()
-    try:
-        b.create(options.force, options.full_backup, options.dry_run, options.confirm)
-    except KeyboardInterrupt:
-        sys.stderr.write('\nAborted on user request.\n')
-        sys.exit(1)
-    except BackupException as e:
-        sys.stderr.write('ERROR: %s\n' % (e))
-        sys.exit(1)
-    t_end = time.time()
-    logging.info('Backup took %.1f seconds' % ((t_end - t_start),))
-
+    import doctest
+    doctest.testmod()
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
