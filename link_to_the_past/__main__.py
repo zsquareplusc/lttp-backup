@@ -81,11 +81,11 @@ def main():
         sys.exit(1)
     except BackupException as e:
         if args.develop: raise
-        sys.stderr.write('ERROR: %s\n' % (e))
+        sys.stderr.write('ERROR: {}\n'.format(e))
         sys.exit(1)
     finally:
         t_end = time.time()
-        logging.info('Action took %.1f seconds' % ((t_end - t_start),))
+        logging.info('Action took {:.1f} seconds'.format(t_end - t_start))
 
 if __name__ == '__main__':
     main()

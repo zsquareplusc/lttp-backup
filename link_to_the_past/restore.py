@@ -33,7 +33,7 @@ class Restore(Backup):
             name = timespec.get_by_timespec(self.find_backups(), timespec_str)
             self.current_backup_path = os.path.join(self.target_path, name)
         if self.current_backup_path is not None:
-            logging.info('Active backup: %s' % (name,))
+            logging.info('Active backup: {}'.format(name))
             self.load_file_list()
             self.root.root = self.current_backup_path
         else:
@@ -53,7 +53,7 @@ class Restore(Backup):
             if recursive:
                 item.cp(destination, recursive=recursive)
             else:
-                raise BackupException('will not work on directories in non-recursive mode: %r' % (source,))
+                raise BackupException('will not work on directories in non-recursive mode: {!r}'.format(source))
         else:
             item.cp(destination)
 
@@ -81,16 +81,16 @@ def action_list(args):
     backups = b.find_backups()
     backups.sort()
     for name in backups:
-        sys.stdout.write('%s\n' % (name,))
+        sys.stdout.write('{}\n'.format(name))
     bad_backups = b.find_incomplete_backups()
     if bad_backups:
-        logging.warn('Incomplete %d backup(s) detected' % (len(bad_backups),))
+        logging.warn('Incomplete {} backup(s) detected'.format(len(bad_backups)))
 
 
 def action_path(args):
     b = Restore()
     b.evaluate_arguments(args)
-    sys.stdout.write('%s\n' % (b.current_backup_path,))
+    sys.stdout.write('{}\n'.format(b.current_backup_path))
 
 
 def action_ls(args):
@@ -102,7 +102,7 @@ def action_ls(args):
         path = '*'
     for item in b.root.flattened():
         if fnmatch.fnmatch(item.path, path):
-            sys.stdout.write('%s\n' % (item,))
+            sys.stdout.write('{}\n'.format(item))
 
 
 def action_cp(args):

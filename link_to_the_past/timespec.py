@@ -54,12 +54,12 @@ def get_limit(timespec, now=None):
         elif unit in ('year', 'years'):
             delta = datetime.timedelta(days=365*int(amount)-1) # XXX not exact years
         else:
-            raise ValueError('do not recognize unit (2nd word) in: %r' % (timespec,))
+            raise ValueError('do not recognize unit (2nd word) in: {!r}'.format(timespec))
         limit = datetime.datetime(now.year, now.month, now.day) - delta
     elif timespec == 'yesterday':
         limit = datetime.datetime(now.year, now.month, now.day)
     else:
-        raise ValueError('do not recognize time specification: %r' % (timespec,))
+        raise ValueError('do not recognize time specification: {!r}'.format(timespec))
     return limit
 
 
@@ -96,7 +96,7 @@ def get_by_timespec(backups, timespec):
                 latest_match = backup
         if latest_match is not None:
             return latest_match
-    raise BackupException('No backup found matching %r' % (timespec,))
+    raise BackupException('No backup found matching {!r}'.format(timespec))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

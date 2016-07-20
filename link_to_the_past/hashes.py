@@ -28,7 +28,7 @@ class CRC32Hash(object):
         self.value = zlib.crc32(data, self.value) & 0xffffffff
 
     def hexdigest(self):
-        return '%08x' % (self.value,)
+        return '{:08x}'.format(self.value)
 
 
 class NoHash(object):

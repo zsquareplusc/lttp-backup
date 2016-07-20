@@ -23,10 +23,10 @@ DEFAULT_CURRENT_DIR_NAME = 'default.profile'
 DEFAULT_PROFILE_NAME = 'default'
 
 def get_named_profile(name):
-    path = os.path.join(PROFILE_DIRECTORY, '%s.profile' % (name,))
+    path = os.path.join(PROFILE_DIRECTORY, '{}.profile'.format(name))
     if os.path.exists(path):
         return path
-    raise IOError('profile %r not found' % (name,))
+    raise IOError('profile {!r} not found'.format(name))
 
 def get_default_profile():
     if os.path.exists(DEFAULT_CURRENT_DIR_NAME):

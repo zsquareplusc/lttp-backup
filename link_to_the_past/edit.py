@@ -66,7 +66,7 @@ class EditBackup(Restore):
                     shutil.rmtree(item.backup_path)
                 item.parent.entries.remove(item)
             else:
-                raise BackupException('will not work on directories in non-recursive mode: %r' % (filelist.escaped(source),))
+                raise BackupException('will not work on directories in non-recursive mode: {!r}'.format(filelist.escaped(source)))
         else:
             # parent temporarily needs to be writeable to remove files
             with writeable(item.parent.backup_path):
@@ -75,9 +75,9 @@ class EditBackup(Restore):
                     os.remove(item.backup_path)
                 except OSError as e:
                     if force:
-                        logging.warning('could not remove file: %s' % (e,))
+                        logging.warning('could not remove file: {}'.format(e))
                     else:
-                        raise BackupException('could not remove file: %s' % (e,))
+                        raise BackupException('could not remove file: {}'.format(e))
             item.parent.entries.remove(item)
         self.write_file_list()
 
@@ -109,7 +109,7 @@ def action_rm(args):
     b = EditBackup()
     b.evaluate_arguments(args)
     entry = b.root[args.SRC]  # XXX just test if it is there. catch ex and print error
-    sys.stderr.write('Going to remove %s\n' % (filelist.escaped(entry.path),))
+    sys.stderr.write('Going to remove {}\n'.format(filelist.escaped(entry.path)))
     ask_the_question()
     b.rm(args.SRC, args.recursive, args.force)
 
@@ -117,7 +117,7 @@ def action_rm(args):
 def action_purge(args):
     b = EditBackup()
     b.evaluate_arguments(args)
-    sys.stderr.write('Going to remove the entire backup: %s\n' % (os.path.basename(b.current_backup_path),))
+    sys.stderr.write('Going to remove the entire backup: {}\n'.format(os.path.basename(b.current_backup_path)))
     ask_the_question()
     b.purge()
 

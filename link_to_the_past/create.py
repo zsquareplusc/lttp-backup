@@ -46,7 +46,7 @@ class Create(Backup):
         # create new directory for the backup
         self.base_name = os.path.join(self.target_path, time.strftime('%Y-%m-%d_%02H%02M%02S'))
         self.current_backup_path = self.base_name + '_incomplete'
-        logging.debug('Creating backup in %s' % (self.current_backup_path,))
+        logging.debug('Creating backup in {}'.format(self.current_backup_path))
         os.mkdir(self.current_backup_path)
         self.source_root.root = self.current_backup_path
         self.source_root.set_hash(self.hash_name)
@@ -90,7 +90,7 @@ class Create(Backup):
         t = os.statvfs(self.target_path)
         bytes_free = t.f_bsize * t.f_bavail
         if bytes_free < self.bytes_required:
-            raise BackupException('not enough free space on target %s available but %s required' % (
+            raise BackupException('not enough free space on target {} available but {} required'.format(
                     filelist.nice_bytes(bytes_free),
                     filelist.nice_bytes(self.bytes_required),
                     ))
@@ -110,14 +110,14 @@ class Create(Backup):
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
-        logging.info('Need to copy %s in %d files' % (filelist.nice_bytes(self.bytes_required), self.files_changed))
+        logging.info('Need to copy {} in {} files'.format(filelist.nice_bytes(self.bytes_required), self.files_changed))
         if confirm:
             input('type ENTER to execute')
         # check target
         self.check_target()
         if dry_run:
             for entry in self.source_root.flattened():
-                sys.stdout.write('%s %s\n' % (
+                sys.stdout.write('{} {}\n'.format(
                         'COPY' if entry.changed else 'LINK',
                         entry,))
         else:
@@ -130,28 +130,28 @@ class Create(Backup):
                 try:
                     p.create()
                 except Exception as e:
-                    logging.exception('Error backing up %s: %s' % (p, e))
+                    logging.exception('Error backing up {}: {}'.format(p, e))
                     #~ logging.error('Error backing up %s: %s' % (p, e))
                 if p.changed and not isinstance(p, filelist.BackupDirectory):
                     bytes_copied += p.stat.size
                 # XXX make this optional
                 if self.bytes_required:
-                    sys.stderr.write('%3d%%\r' % ((100.0*bytes_copied/self.bytes_required),))
+                    sys.stderr.write('{:3d}%\r'.format((100.0*bytes_copied/self.bytes_required)))
             # secure directories (make them read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
                 try:
                     p.secure_backup()
                 except Exception as e:
-                    logging.error('Error securing %s: %s' % (p, e))
+                    logging.error('Error securing {}: {}'.format(p, e))
             self.finalize_target()
             time_used = time.time() - t_start
-            logging.info('Copied %s in %.1f seconds = %s/s' % (
+            logging.info('Copied {} in {:.1f} seconds = {}/s'.format(
                     filelist.nice_bytes(self.bytes_required),
                     time_used,
                     filelist.nice_bytes(self.bytes_required/time_used),
                     ))
-            logging.info('Created %s' % (self.base_name,))
+            logging.info('Created {}'.format(self.base_name))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

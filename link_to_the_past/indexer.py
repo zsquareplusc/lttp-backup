@@ -24,24 +24,24 @@ class ShellPattern(object):
         self.pattern = pattern
 
     def __repr__(self):
-        return 'ShellPattern(%r)' % (self.pattern,)
+        return 'ShellPattern({!r})'.format(self.pattern)
 
     def matches(self, filename):
         return fnmatch.fnmatch(filename, self.pattern)
 
 
 class Location(object):
-    """A location on the file system, user as source for backups"""
+    """A location on the file system, used as source for backups"""
     def __init__(self, path):
         self.path = os.path.normpath(os.path.abspath(path))
         self.excludes = []
 
     def __repr__(self):
-        return 'Location(%r)' % (self.path,)
+        return 'Location({!r})'.format(self.path)
 
     def _scan(self, indexer, parent, device):
         """scan recursively and handle excluded files and directories on the fly"""
-        logging.debug('scanning %r' % (parent.path,))
+        logging.debug('scanning {!r}'.format(parent.path))
         for name in os.listdir(parent.path):
             path = os.path.join(parent.path, name)
             if indexer.is_included(path):
@@ -49,11 +49,11 @@ class Location(object):
                 try:
                     stat_now = os.lstat(path)
                 except OSError: # permission error
-                    logging.error('access failed, ignoring: %s' % (path,))
+                    logging.error('access failed, ignoring: {}'.format(path))
                     continue
                 # do not cross filesystem boundaries
                 if stat_now.st_dev != device:
-                    logging.warning('will not cross filesystems, ignore: %r' % (path,))
+                    logging.warning('will not cross filesystems, ignore: {!r}'.format(path))
                     continue
                 # store dirs and files
                 mode = stat_now.st_mode
@@ -84,7 +84,7 @@ class Location(object):
                 parent = entry
             self._scan(indexer, parent, os.lstat(path).st_dev)
         else:
-            raise BackupException('location is not a directory: %r' % (self.path,))
+            raise BackupException('location is not a directory: {!r}'.format(self.path))
 
 
 class Indexer(object):

@@ -27,7 +27,7 @@ class Word(str):
         return self
 
     def __repr__(self):
-        return "Word(%s, %r, %r)" % (
+        return "Word({}, {!r}, {!r})".format(
                 str.__repr__(self),
                 self.filename,
                 self.lineno)
@@ -68,12 +68,12 @@ class ContolFileParser(object):
         return self._iterator.__next__()
 
     def interpret(self, word):
-        a = 'word_%s' % (word,)
+        a = 'word_{}'.format(word)
         if hasattr(self, a):
             function = getattr(self, a)
             function()
         else:
-            raise SyntaxError('unknown word: %r' % (word,))
+            raise SyntaxError('unknown word: {!r}'.format(word))
 
     def path(self, path):
         """\

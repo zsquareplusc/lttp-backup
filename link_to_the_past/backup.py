@@ -49,13 +49,13 @@ class Backup(object):
         if backups:
             backups.sort()
             self.last_backup_path = os.path.join(self.target_path, backups[-1])
-            logging.debug('Latest backup: %s' % (self.last_backup_path,))
+            logging.debug('Latest backup: {}'.format(self.last_backup_path))
             return backups[-1]
         else:
             logging.info('No previous backup found')
 
     def load_configuration(self, filename):
-        logging.debug('Loading configuration %s' % (filename,))
+        logging.debug('Loading configuration {}'.format(filename))
         c = BackupControl(self)
         c.load_file(filename)
         if self.target_path is None:
@@ -111,7 +111,7 @@ class Backup(object):
         try:
             self.load_configuration(args.control)
         except IOError as e:
-            sys.stderr.write('ERROR: Failed to load configuration: %s\n' % (e,))
+            sys.stderr.write('ERROR: Failed to load configuration: {}\n'.format(e))
             sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

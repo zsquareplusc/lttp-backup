@@ -41,16 +41,16 @@ def nice_bytes(value):
     >>> nice_bytes(2e9)
     '2.0GB'
     """
-    if value < 0: raise ValueError('Byte count can not be negative: %s' % (value,))
+    if value < 0: raise ValueError('Byte count can not be negative: {}'.format(value))
     value = float(value)
     exp = 0
     while value >= 1000 and exp < len(EXPONENTS):
         value /= 1000
         exp += 1
     if exp:
-        return '%.1f%sB' % (value, EXPONENTS[exp])
+        return '{:.1f}{}B'.format(value, EXPONENTS[exp])
     else:
-        return '%dB' % (value,)
+        return '{}B'.format(value)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -140,7 +140,7 @@ def unescape(path):
     return codecs.decode(path, 'unicode-escape').replace('\\ ', ' ')
 
 def join(root, path):
-    return os.path.normpath('%s%s%s' % (root, os.sep, path))
+    return os.path.normpath('{}{}{}'.format(root, os.sep, path))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -264,7 +264,7 @@ class BackupPath(object):
         return os.path.normpath(join(self.filelist.reference, self.path))
 
     def __str__(self):
-        return '%s %4s %4s %7s %s %s' % (
+        return '{} {:4} {:4} {:7} {} {}'.format(
                 mode_to_chars(self.stat.mode),
                 self.stat.uid,
                 self.stat.gid,
@@ -273,20 +273,15 @@ class BackupPath(object):
                 escaped(self.path))
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.path)
+        return '{}({!r})'.format(self.__class__.__name__, self.path)
 
     @property
     def file_list_command(self):
-        return 'p1 %s %s %s %s %.9f %.9f %s %s %s\n' % (
-                self.stat.mode,
-                self.stat.uid,
-                self.stat.gid,
-                self.stat.size,
-                self.stat.atime,
-                self.stat.mtime,
-                self.stat.flags if self.stat.flags is not None else '-',
-                self.data_hash,
-                escaped(self.path))
+        return 'p1 {s.mode} {s.uid} {s.gid} {s.size} {s.atime:.9f} {s.mtime:.9f} {flags} {hash} {path}\n'.format(
+                s=self.stat,
+                flags=self.stat.flags if self.stat.flags is not None else '-',
+                hash=self.data_hash,
+                path=escaped(self.path))
 
 
 class BackupFile(BackupPath):
@@ -313,12 +308,12 @@ class BackupFile(BackupPath):
         Create a copy of the file (or link) to given destination. Permissions
         are restored if the flag is true.
         """
-        logging.debug('copying %s' % (escaped(self.path),))
+        logging.debug('copying {}'.format(escaped(self.path)))
         hexdigest = self._copy_file(self.backup_path, dst)
         if permissions:
             self.stat.write(dst)
         if self.data_hash != hexdigest:
-            logging.error('WARNING: hash changed! File was copied successfully but does not match the stored hash: %s (expected: %s got: %s)' % (escaped(self.path), self.data_hash, hexdigest))
+            logging.error('WARNING: hash changed! File was copied successfully but does not match the stored hash: {} (expected: {} got: {})'.format(escaped(self.path), self.data_hash, hexdigest))
 
     def _copy_file(self, src, dst):
         """Create a copy a file (or link)"""
@@ -340,23 +335,23 @@ class BackupFile(BackupPath):
 
     def _copy(self):
         """Create a copy of the file"""
-        logging.debug('coyping %s' % (escaped(self.path),))
+        logging.debug('coyping {}'.format(escaped(self.path)))
         self.data_hash = self._copy_file(self.source_path, self.backup_path)
         try:
             os.utime(self.backup_path, (self.stat.atime, self.stat.mtime), follow_symlinks=False)
             self.stat.make_read_only(self.backup_path)
         except OSError:
-            logging.exception('Error setting stats on %s' % (escaped(self.backup_path),))
+            logging.exception('Error setting stats on {}'.format(escaped(self.backup_path)))
             #~ logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
 
     def _link(self):
         """Create a hard link for the file"""
-        logging.debug('hard linking %s' % (escaped(self.path),))
+        logging.debug('hard linking {}'.format(escaped(self.path)))
         os.link(self.reference_path, self.backup_path)
         try:
             self.stat.make_read_only(self.backup_path)
         except OSError:
-            logging.error('Error setting stats on %s' % (escaped(self.backup_path),))
+            logging.error('Error setting stats on {}'.format(escaped(self.backup_path)))
 
     def create(self):
         """Backup the file, either by hard linking or copying"""
@@ -394,7 +389,7 @@ class BackupFile(BackupPath):
         Typically used to read in the hash of source files, e.g. for change
         detection.
         """
-        logging.debug('calculating hash of %s' % (escaped(self.source_path),))
+        logging.debug('calculating hash of {}'.format(escaped(self.source_path)))
         self.data_hash = self._calculate_hash(self.source_path)
 
     def verify_hash(self, path):
@@ -442,7 +437,7 @@ class BackupDirectory(BackupPath):
 
     def create(self):
         """Directories are always created"""
-        logging.debug('new directory %s' % (escaped(self.path),))
+        logging.debug('new directory {}'.format(escaped(self.path)))
         os.makedirs(self.backup_path)
         os.utime(self.backup_path, (self.stat.atime, self.stat.mtime))
         # directory needs to stay writeable as we need to add files
@@ -453,7 +448,7 @@ class BackupDirectory(BackupPath):
 
     def cp(self, dst, permissions=True, recursive=False):
         """Copy directories to given destination"""
-        logging.debug('new directory %s' % (escaped(self.path),))
+        logging.debug('new directory {}'.format(escaped(self.path)))
         os.makedirs(dst)
         if recursive:
             # XXX still copy files of a directory in non recusive mode
@@ -505,7 +500,7 @@ class BackupDirectory(BackupPath):
         """
         if self.path != other.path:
             # this should not happen when comparing trees starting with the root.
-            raise ValueError('other tree does not contain: %s' % (escaped(self.path),))
+            raise ValueError('other tree does not contain: {}'.format(escaped(self.path)))
         #~ logging.debug('compare: %s' % (escaped(self.path),))
         files = CompareResult()
         dirs = CompareResult()
@@ -566,7 +561,7 @@ class BackupDirectory(BackupPath):
             for entry in self.entries:
                 if entry.name == name:
                     return entry
-        raise KeyError('no such directory: %s' % (escaped(name),))
+        raise KeyError('no such directory: {}'.format(escaped(name)))
 
     def new_dir(self, name, *args, **kwargs):
         """Create a new sub-directory in this directory"""
@@ -582,9 +577,9 @@ class BackupDirectory(BackupPath):
 
     def print_listing(self, message='Listing'):
         """For debugging: print a complete tree"""
-        sys.stdout.write('%s: %s\n' % (message, escaped(self.path)))
+        sys.stdout.write('{}: {}\n'.format(message, escaped(self.path)))
         for entry in self.flattened():
-            sys.stdout.write('%s\n' % (entry,))
+            sys.stdout.write('{}\n'.format(entry))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -606,7 +601,7 @@ class FileList(BackupDirectory):
         self.hash_name = name
 
     def load(self, filename):
-        logging.debug('Loading file list %s' % (filename,))
+        logging.debug('Loading file list {}'.format(filename))
         c = FileListParser(self)
         c.load_file(filename)
 
@@ -622,7 +617,7 @@ class FileList(BackupDirectory):
             rename = None
         with codecs.open(filename, 'w', 'utf-8') as file_list:
             if self.hash_name is not None:
-                file_list.write('hash %s\n' % (self.hash_name,))
+                file_list.write('hash {}\n'.format(self.hash_name))
             for p in self.flattened():
                 file_list.write(p.file_list_command)
         # make it read-only
