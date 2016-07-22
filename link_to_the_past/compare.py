@@ -24,7 +24,7 @@ def print_changes(iterator, long_format):
         entries.extend((entry, ' ') for entry in dirs.same)
         entries.extend((entry, 'A') for entry in dirs.added)
         entries.extend((entry, 'R') for entry in dirs.removed)
-        #~ entries.sort()
+        entries.sort()
         for entry, status in entries:
             if long_format:
                 sys.stdout.write('{} {}\n'.format(status, entry))

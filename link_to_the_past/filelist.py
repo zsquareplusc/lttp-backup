@@ -289,6 +289,9 @@ class BackupFile(BackupPath):
 
     BLOCKSIZE = 1024*256   # 256kB
 
+    def __lt__(self, other):
+        return self.path < other.path
+
     def __eq__(self, other):
         same_hash = True    # if can't compare - ignore
         # hashes must be made using same algorithm and must be calculated (not '-')
