@@ -1,2 +1,3 @@
 test/example_backups/*
 *.pyc
+__pycache__
