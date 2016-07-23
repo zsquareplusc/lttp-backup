@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
+#
+# (C) 2012-2016 Chris Liechti <cliechti@gmx.net>
+#
+# SPDX-License-Identifier:    BSD-3-Clause
 """\
 Link To The Past - a backup tool
 
@@ -11,8 +15,6 @@ directories that have been archived by accident.
 Actions to delete backups are also here. A specific backup can be
 deleted and there is an automatic delete function that keeps less
 backups the further back in time they were made.
-
-(C) 2012 cliechti@gmx.net
 """
 
 import shutil

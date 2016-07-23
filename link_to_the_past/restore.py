@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
+#
+# (C) 2012-2016 Chris Liechti <cliechti@gmx.net>
+#
+# SPDX-License-Identifier:    BSD-3-Clause
 """\
 Link To The Past - a backup tool
 
 Restore and inspection tool.
-
-(C) 2012 cliechti@gmx.net
 """
 import os
 import stat

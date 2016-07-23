@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# encoding: utf-8
 #
-# Copyright (c) 2012 Chris Liechti <cliechti@gmx.net>
-# All Rights Reserved.
-# Simplified BSD License (see LICENSE.txt for full text)
+# (C) 2012-2016 Chris Liechti <cliechti@gmx.net>
+#
+# SPDX-License-Identifier:    BSD-3-Clause
 
 from link_to_the_past import *
 
