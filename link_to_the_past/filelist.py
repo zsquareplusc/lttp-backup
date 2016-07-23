@@ -617,7 +617,7 @@ class FileList(BackupDirectory):
             rename = filename
             filename = filename + '.new'
         else:
-            rename = None
+            rename = None  # XXX why not always use .new and rename?
         with codecs.open(filename, 'w', 'utf-8') as file_list:
             if self.hash_name is not None:
                 file_list.write('hash {}\n'.format(self.hash_name))
@@ -650,11 +650,11 @@ class FileList(BackupDirectory):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-class FileListParser(config_file_parser.ContolFileParser):
+class FileListParser(config_file_parser.ControlFileParser):
     """Parser for file lists."""
 
     def __init__(self, filelist):
-        config_file_parser.ContolFileParser.__init__(self)
+        config_file_parser.ControlFileParser.__init__(self)
         self.filelist = filelist
         self.filelist.set_hash(None)
 

@@ -5,17 +5,17 @@ Link To The Past - a backup tool
 
 Hash functions and commands.
 
-(C) 2012 cliechti@gmx.net
+(C) 2012-2016 cliechti@gmx.net
 """
 
 import hashlib
 import zlib
 
-class CRC32Hash(object):
+class CRC32(object):
     """\
     CRC32 API compatible to the hashlib functions (subset used by this program).
 
-    >>> h = CRC32Hash()
+    >>> h = CRC32()
     >>> h.update(b'Hello World')
     >>> h.hexdigest()
     '4a17b156'
@@ -54,7 +54,7 @@ class NoHash(object):
 
 SUPPORTED_HASHES = {
         'NONE':     NoHash,
-        'CRC32':    CRC32Hash,
+        'CRC32':    CRC32,
         'MD5':      hashlib.md5,
         'SHA-256':  hashlib.sha256,
         'SHA-512':  hashlib.sha512,

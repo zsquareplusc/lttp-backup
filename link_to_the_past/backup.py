@@ -116,11 +116,11 @@ class Backup(object):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-class BackupControl(config_file_parser.ContolFileParser):
+class BackupControl(config_file_parser.ControlFileParser):
     """Parser for backup control files"""
 
     def __init__(self, backup):
-        config_file_parser.ContolFileParser.__init__(self)
+        config_file_parser.ControlFileParser.__init__(self)
         self.backup = backup
 
     def word_target(self):

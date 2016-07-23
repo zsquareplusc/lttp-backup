@@ -50,7 +50,7 @@ def words_in_file(filename, fileobj=None, include_newline=False):
             yield Word('\n', filename, n+1, line)
 
 
-class ContolFileParser(object):
+class ControlFileParser(object):
     """Parser for a simple language using white space separated words"""
     def __init__(self):
         self.root = '.'
