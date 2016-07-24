@@ -188,10 +188,8 @@ def update_argparse(subparsers):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def main():
-    import sys
     import doctest
     doctest.testmod()
-    sys.exit(0)
 
 if __name__ == '__main__':
     main()

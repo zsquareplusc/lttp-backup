@@ -13,7 +13,6 @@ import os
 import codecs
 import glob
 import logging
-import optparse
 
 from . import config_file_parser, profile, indexer
 #~ import filelist
@@ -65,45 +64,6 @@ class Backup(object):
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    def optparse_populate(self, parser):
-        """Adds common options to the parser"""
-
-        group = optparse.OptionGroup(parser, 'Messages')
-        group.add_option("--debug",
-            dest = "debug",
-            help = "show technical details",
-            default = False,
-            action = 'store_true'
-        )
-        group.add_option("-v", "--verbose",
-            dest = "verbosity",
-            help = "increase level of messages",
-            default = 1,
-            action = 'count'
-        )
-        group.add_option("-q", "--quiet",
-            dest = "verbosity",
-            help = "disable messages (opposite of --verbose)",
-            const = 0,
-            action = 'store_const'
-        )
-        parser.add_option_group(group)
-
-        group = optparse.OptionGroup(parser, 'Backup Configuration')
-        group.add_option("-c", "--control",
-            dest = "control",
-            help = "load control file",
-            metavar = 'FILE',
-            default = None,
-        )
-        group.add_option("-p", "--profile",
-            dest = "profile",
-            help = "load named profile",
-            metavar = 'NAME',
-            default = None,
-        )
-        parser.add_option_group(group)
-
     def evaluate_arguments(self, args):
         """Apply the effects of the common options"""
         if args.profile is not None:
@@ -153,7 +113,6 @@ class BackupControl(config_file_parser.ControlFileParser):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if __name__ == '__main__':
-
     import doctest
     doctest.testmod()
 

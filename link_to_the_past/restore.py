@@ -41,7 +41,6 @@ class Restore(Backup):
         else:
             logging.warning('No backup found')
 
-
     def cp(self, source, destination, recursive=False):
         """\
         Copy files or directories from the backup (source) to given
@@ -58,7 +57,6 @@ class Restore(Backup):
                 raise BackupException('will not work on directories in non-recursive mode: {!r}'.format(source))
         else:
             item.cp(destination)
-
 
     @staticmethod
     def populate_arguments(parser):

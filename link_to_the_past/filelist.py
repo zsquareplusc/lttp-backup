@@ -60,11 +60,11 @@ def mode_to_chars(mode):
     """\
     'ls' like mode as character sequence.
 
-    >>> mode_to_chars(0o700|32768)
+    >>> mode_to_chars(0o700 | 32768)
     '-rwx------'
-    >>> mode_to_chars(0o070|32768)
+    >>> mode_to_chars(0o070 | 32768)
     '----rwx---'
-    >>> mode_to_chars(0o007|32768)
+    >>> mode_to_chars(0o007 | 32768)
     '-------rwx'
     """
     if mode is None: return '----------'
@@ -318,7 +318,9 @@ class BackupFile(BackupPath):
         if permissions:
             self.stat.write(dst)
         if self.data_hash != hexdigest:
-            logging.error('WARNING: hash changed! File was copied successfully but does not match the stored hash: {} (expected: {} got: {})'.format(escaped(self.path), self.data_hash, hexdigest))
+            logging.error('WARNING: hash changed! File was copied successfully '
+                          'but does not match the stored hash: '
+                          '{} (expected: {} got: {})'.format(escaped(self.path), self.data_hash, hexdigest))
 
     def _copy_file(self, src, dst):
         """Create a copy a file (or link)"""
