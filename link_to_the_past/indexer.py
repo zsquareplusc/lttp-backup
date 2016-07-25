@@ -9,7 +9,6 @@ Link To The Past - a backup tool
 
 Scan file system to create file lists.
 """
-import sys
 import os
 import fnmatch
 import stat
@@ -18,8 +17,8 @@ import logging
 from . import filelist
 from .error import BackupException
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ShellPattern(object):
     """A shell like pattern to test filenames"""
     def __init__(self, pattern):
@@ -50,7 +49,7 @@ class Location(object):
                 #~ logging.debug('is included %r' % (path,))
                 try:
                     stat_now = os.lstat(path)
-                except OSError: # permission error
+                except OSError:  # permission error
                     logging.error('access failed, ignoring: {}'.format(path))
                     continue
                 # do not cross filesystem boundaries
@@ -107,8 +106,8 @@ class Indexer(object):
         for location in self.includes:
             location.scan(self)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
     i = Indexer(filelist.FileList())
     i.includes.append(Location('test/example_source'))
@@ -119,4 +118,3 @@ if __name__ == '__main__':
 
     #~ import doctest
     #~ doctest.testmod()
-

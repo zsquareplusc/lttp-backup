@@ -52,9 +52,9 @@ def get_limit(timespec, now=None):
         elif unit in ('week', 'weeks'):
             delta = datetime.timedelta(days=7*int(amount)-1)
         elif unit in ('month', 'months'):
-            delta = datetime.timedelta(days=31*int(amount)-1) # XXX not exact months
+            delta = datetime.timedelta(days=31*int(amount)-1)  # XXX not exact months
         elif unit in ('year', 'years'):
-            delta = datetime.timedelta(days=365*int(amount)-1) # XXX not exact years
+            delta = datetime.timedelta(days=365*int(amount)-1)  # XXX not exact years
         else:
             raise ValueError('do not recognize unit (2nd word) in: {!r}'.format(timespec))
         limit = datetime.datetime(now.year, now.month, now.day) - delta
@@ -105,4 +105,3 @@ def get_by_timespec(backups, timespec):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-

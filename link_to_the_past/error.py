@@ -8,6 +8,6 @@
 Link To The Past - a backup tool
 """
 
+
 class BackupException(Exception):
     """A class for backup related errors"""
-

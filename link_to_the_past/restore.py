@@ -10,15 +10,14 @@ Link To The Past - a backup tool
 Restore and inspection tool.
 """
 import os
-import stat
 import fnmatch
 import logging
 
-from . import config_file_parser, filelist, timespec
+from . import filelist, timespec
 from .backup import *
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class Restore(Backup):
     def __init__(self):
         Backup.__init__(self)
@@ -62,19 +61,19 @@ class Restore(Backup):
     def populate_arguments(parser):
         #~ Backup.optparse_populate()
         group = parser.add_argument_group('Backup Selection')
-        group.add_argument("-t", "--time-spec",
-            dest = "timespec",
-            help = "load backup matching this time specification",
-            default = None,
-            action = 'store'
-        )
+        group.add_argument(
+            "-t", "--time-spec",
+            dest="timespec",
+            help="load backup matching this time specification",
+            default=None,
+            action='store')
 
     def evaluate_arguments(self, options):
         Backup.evaluate_arguments(self, options)
         self.find_backup_by_time(options.timespec)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_list(args):
     b = Restore()
     b.evaluate_arguments(args)
@@ -125,7 +124,8 @@ def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
     parser = subparsers.add_parser('list')
     group = parser.add_argument_group('File Selection')
-    group.add_argument("-r", "--recursive",
+    group.add_argument(
+        "-r", "--recursive",
         help="apply operation recursively to all subdirectories",
         default=False,
         action='store_true')
@@ -141,7 +141,8 @@ def update_argparse(subparsers):
     parser.set_defaults(func=action_ls)
 
     parser = subparsers.add_parser('cp')
-    parser.add_argument("-r", "--recursive",
+    parser.add_argument(
+        "-r", "--recursive",
         help="apply operation recursively to all subdirectories",
         default=False,
         action='store_true')

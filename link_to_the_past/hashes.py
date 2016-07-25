@@ -13,6 +13,7 @@ Hash functions and commands.
 import hashlib
 import zlib
 
+
 class CRC32(object):
     """\
     CRC32 API compatible to the hashlib functions (subset used by this program).
@@ -52,15 +53,16 @@ class NoHash(object):
     def hexdigest(self):
         return '-'
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SUPPORTED_HASHES = {
-        'NONE':     NoHash,
-        'CRC32':    CRC32,
-        'MD5':      hashlib.md5,
-        'SHA-256':  hashlib.sha256,
-        'SHA-512':  hashlib.sha512,
-        }
+    'NONE':     NoHash,
+    'CRC32':    CRC32,
+    'MD5':      hashlib.md5,
+    'SHA-256':  hashlib.sha256,
+    'SHA-512':  hashlib.sha512,
+    }
+
 
 def get_factory(name):
     """\
@@ -71,12 +73,12 @@ def get_factory(name):
     >>> h.hexdigest()
     'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
     """
-    if name is None: name = 'NONE'
+    if name is None:
+        name = 'NONE'
     return SUPPORTED_HASHES[name.upper()]
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-

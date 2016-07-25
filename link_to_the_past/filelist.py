@@ -24,7 +24,6 @@ import sys
 import os
 import codecs
 import time
-import fnmatch
 import stat
 import logging
 
@@ -32,6 +31,7 @@ from . import config_file_parser, hashes
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EXPONENTS = ('', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+
 
 def nice_bytes(value):
     """\
@@ -43,7 +43,8 @@ def nice_bytes(value):
     >>> nice_bytes(2e9)
     '2.0GB'
     """
-    if value < 0: raise ValueError('Byte count can not be negative: {}'.format(value))
+    if value < 0:
+        raise ValueError('Byte count can not be negative: {}'.format(value))
     value = float(value)
     exp = 0
     while value >= 1000 and exp < len(EXPONENTS):
@@ -54,8 +55,8 @@ def nice_bytes(value):
     else:
         return '{}B'.format(value)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def mode_to_chars(mode):
     """\
     'ls' like mode as character sequence.
@@ -67,7 +68,8 @@ def mode_to_chars(mode):
     >>> mode_to_chars(0o007 | 32768)
     '-------rwx'
     """
-    if mode is None: return '----------'
+    if mode is None:
+        return '----------'
     flags = []
     # file type
     if stat.S_ISDIR(mode):
@@ -113,8 +115,8 @@ def mode_to_chars(mode):
 
     return ''.join(flags)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ESCAPE_CONTROLS = dict((k, repr(chr(k))[1:-1]) for k in range(32))
 ESCAPE_CONTROLS[0] = r'\0'
 ESCAPE_CONTROLS[7] = r'\a'
@@ -123,6 +125,7 @@ ESCAPE_CONTROLS[11] = r'\v'
 ESCAPE_CONTROLS[12] = r'\f'
 ESCAPE_CONTROLS[32] = r'\ '
 ESCAPE_CONTROLS[ord('\\')] = '\\\\'
+
 
 def escaped(path):
     """\
@@ -137,15 +140,17 @@ def escaped(path):
     """
     return path.translate(ESCAPE_CONTROLS)
 
+
 def unescape(path):
     """Escape control non printable characters and the space"""
     return codecs.decode(path, 'unicode-escape').replace('\\ ', ' ')
 
+
 def join(root, path):
     return os.path.normpath('{}{}{}'.format(root, os.sep, path))
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompareResult(object):
     """Store entry lists for compare operations."""
 
@@ -159,8 +164,8 @@ class CompareResult(object):
         self.added = added if added is not None else []
         self.removed = removed if removed is not None else []
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class Stat(object):
     """Handle file meta data"""
 
@@ -211,8 +216,7 @@ class Stat(object):
                     try:
                         os.chflags(path, self.flags)
                     except OSError as why:
-                        if (not hasattr(errno, 'EOPNOTSUPP') or
-                            why.errno != errno.EOPNOTSUPP):
+                        if (not hasattr(errno, 'EOPNOTSUPP') or why.errno != errno.EOPNOTSUPP):
                             raise
             os.chmod(path, self.mode)
 
@@ -220,10 +224,10 @@ class Stat(object):
         """Use chmod to apply the modes with W bits cleared"""
         # XXX should have l-versions of all functions - missing in Python os mod. :(
         if not stat.S_ISLNK(self.mode):
-            os.chmod(path, self.mode & ~(stat.S_IWUSR|stat.S_IWGRP|stat.S_IWOTH))
+            os.chmod(path, self.mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH))
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 class BackupPath(object):
     """Representing an object that is contained in a backup"""
 
@@ -267,12 +271,12 @@ class BackupPath(object):
 
     def __str__(self):
         return '{} {:4} {:4} {:7} {} {}'.format(
-                mode_to_chars(self.stat.mode),
-                self.stat.uid,
-                self.stat.gid,
-                nice_bytes(self.stat.size),
-                time.strftime('%Y-%m-%d %02H:%02M:%02S', time.localtime(self.stat.mtime)),
-                escaped(self.path))
+            mode_to_chars(self.stat.mode),
+            self.stat.uid,
+            self.stat.gid,
+            nice_bytes(self.stat.size),
+            time.strftime('%Y-%m-%d %02H:%02M:%02S', time.localtime(self.stat.mtime)),
+            escaped(self.path))
 
     def __repr__(self):
         return '{}({!r})'.format(self.__class__.__name__, self.path)
@@ -280,10 +284,10 @@ class BackupPath(object):
     @property
     def file_list_command(self):
         return 'p1 {s.mode} {s.uid} {s.gid} {s.size} {s.atime:.9f} {s.mtime:.9f} {flags} {hash} {path}\n'.format(
-                s=self.stat,
-                flags=self.stat.flags if self.stat.flags is not None else '-',
-                hash=self.data_hash,
-                path=escaped(self.path))
+            s=self.stat,
+            flags=self.stat.flags if self.stat.flags is not None else '-',
+            hash=self.data_hash,
+            path=escaped(self.path))
 
 
 class BackupFile(BackupPath):
@@ -305,7 +309,7 @@ class BackupFile(BackupPath):
                 self.stat.gid == other.stat.gid and
                 self.stat.mode == other.stat.mode and
                 self.stat.size == other.stat.size and
-                abs(self.stat.mtime - other.stat.mtime) <= 0.00001 and # 10us; as it is a float...
+                abs(self.stat.mtime - other.stat.mtime) <= 0.00001 and  # 10us; as it is a float...
                 self.stat.flags == other.stat.flags)
 
     def cp(self, dst, permissions=True):
@@ -372,7 +376,6 @@ class BackupFile(BackupPath):
         # nothing to do here as that was already done when creating
         # the backup
 
-
     def _calculate_hash(self, path):
         """\
         Calculate the hash of the file given as path. The hash value is
@@ -426,7 +429,7 @@ class BackupFile(BackupPath):
                 self.stat.gid == stat_now.st_gid and
                 self.stat.mode == stat_now.st_mode and
                 self.stat.size == st_size and
-                abs(self.stat.mtime - stat_now.st_mtime) <= 0.00001 and # 10us; as it is a float...
+                abs(self.stat.mtime - stat_now.st_mtime) <= 0.00001 and  # 10us; as it is a float...
                 self.stat.flags == st_flags)
 
 
@@ -511,7 +514,7 @@ class BackupDirectory(BackupPath):
         #~ logging.debug('compare: %s' % (escaped(self.path),))
         files = CompareResult()
         dirs = CompareResult()
-        ref = list(other.entries) # work on copy
+        ref = list(other.entries)  # work on copy
         for entry in self.entries:
             for ref_entry in ref:
                 if entry.path == ref_entry.path:
@@ -588,8 +591,8 @@ class BackupDirectory(BackupPath):
         for entry in self.flattened():
             sys.stdout.write('{}\n'.format(entry))
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileList(BackupDirectory):
     """Manage a tree of files and directories."""
     def __init__(self):
@@ -628,7 +631,7 @@ class FileList(BackupDirectory):
             for p in self.flattened():
                 file_list.write(p.file_list_command)
         # make it read-only
-        os.chmod(filename, stat.S_IRUSR|stat.S_IRGRP)
+        os.chmod(filename, stat.S_IRUSR | stat.S_IRGRP)
         if rename:
             # now remove old list and replace with new one
             os.remove(rename)
@@ -653,7 +656,6 @@ class FileList(BackupDirectory):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 class FileListParser(config_file_parser.ControlFileParser):
     """Parser for file lists."""
 
@@ -690,8 +692,8 @@ class FileListParser(config_file_parser.ControlFileParser):
         entry.parent = self.filelist[path]
         entry.parent.entries.append(entry)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
     f = FileList()
     f.load('test/example_backups/2012-09-07_043453/file_list')
@@ -700,4 +702,3 @@ if __name__ == '__main__':
 
     import doctest
     doctest.testmod()
-
