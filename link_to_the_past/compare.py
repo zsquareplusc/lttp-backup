@@ -14,6 +14,7 @@ from .restore import *
 from .create import *
 from . import filelist
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def print_changes(iterator, long_format):
     for root, dirs, files in iterator:
@@ -36,8 +37,8 @@ def print_changes(iterator, long_format):
             #~ print "<--", e1
             #~ print "-->", e2
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_verify(args):
     """compare hashes in source with saved file list"""
     b = Restore()
@@ -107,7 +108,8 @@ def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
     parser = subparsers.add_parser('verify')
     group = parser.add_argument_group('Display Options')
-    group.add_argument("-l", "--long",
+    group.add_argument(
+        "-l", "--long",
         help="Show detailed file info",
         default=False,
         action='store_true')
@@ -121,10 +123,10 @@ def update_argparse(subparsers):
     parser = subparsers.add_parser('changes')
     parser.add_argument('TIMESPEC2', help='specify other backup or "now" for current files')
     group = parser.add_argument_group('Display Options')
-    group.add_argument("-l", "--long",
+    group.add_argument(
+        "-l", "--long",
         help="Show detailed file info",
         default=False,
         action='store_true')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_changes)
-

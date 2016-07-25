@@ -7,10 +7,8 @@
 """\
 Link To The Past - a backup tool
 """
-import time
 import sys
 import os
-import codecs
 import glob
 import logging
 
@@ -19,7 +17,6 @@ from . import config_file_parser, profile, indexer
 from .error import BackupException
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 class Backup(object):
     """Common backup description."""
     def __init__(self):
@@ -77,7 +74,6 @@ class Backup(object):
             sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 class BackupControl(config_file_parser.ControlFileParser):
     """Parser for backup control files"""
 
@@ -115,4 +111,3 @@ class BackupControl(config_file_parser.ControlFileParser):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-

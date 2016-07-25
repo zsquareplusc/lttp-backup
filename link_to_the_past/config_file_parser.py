@@ -11,9 +11,9 @@ import sys
 import os
 import codecs
 import re
-import logging
 
 m_comment = re.compile('(#.*$)', re.UNICODE)    # regexp to remove line comments
+
 
 class Word(str):
     """\
@@ -28,9 +28,10 @@ class Word(str):
 
     def __repr__(self):
         return "Word({}, {!r}, {!r})".format(
-                str.__repr__(self),
-                self.filename,
-                self.lineno)
+            str.__repr__(self),
+            self.filename,
+            self.lineno)
+
 
 def words_in_file(filename, fileobj=None, include_newline=False):
     """\
@@ -101,4 +102,3 @@ if __name__ == '__main__':
     print(b)
     print(b.source_locations)
     print(b.source_locations[-1].excludes)
-

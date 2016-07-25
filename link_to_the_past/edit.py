@@ -22,8 +22,8 @@ import shutil
 from .restore import *
 from .error import BackupException
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class writeable(object):
     """\
     Context manager that chmod's the given path to make it writeable.
@@ -34,13 +34,13 @@ class writeable(object):
         self.permissions = os.lstat(path).st_mode
 
     def __enter__(self):
-        os.chmod(self.path, self.permissions|stat.S_IWUSR)
+        os.chmod(self.path, self.permissions | stat.S_IWUSR)
 
     def __exit__(self, exc_type, exc_value, traceback):
         os.chmod(self.path, self.permissions)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class EditBackup(Restore):
 
     def write_file_list(self):
@@ -86,7 +86,7 @@ class EditBackup(Restore):
     def purge(self):
         """Remove the entire backup"""
         # make the backup writeable
-        os.chmod(self.current_backup_path, stat.S_IRUSR|stat.S_IWUSR|stat.S_IXUSR)
+        os.chmod(self.current_backup_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
         # make all sub-directoris writable, needed for rmdir
         for path, dirs, files in self.root.walk():
             # directories need to be writeable
@@ -98,15 +98,14 @@ class EditBackup(Restore):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 def ask_the_question():
     sys.stderr.write('This alters the backup. The file(s) will be lost forever!\n')
     if input('Continue? [y/N] ').lower() != 'y':
         sys.stderr.write('Aborted\n')
         sys.exit(1)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_rm(args):
     b = EditBackup()
     b.evaluate_arguments(args)
@@ -129,11 +128,13 @@ def update_argparse(subparsers):
     parser = subparsers.add_parser('rm')
     parser.add_argument('SRC')
     group = parser.add_argument_group('File Selection')
-    group.add_argument("-f", "--force",
+    group.add_argument(
+        "-f", "--force",
         help="enforce certain operations",
         default=False,
         action='store_true')
-    group.add_argument("-r", "--recursive",
+    group.add_argument(
+        "-r", "--recursive",
         help="apply operation recursively to all subdirectories",
         default=False,
         action='store_true')
@@ -143,4 +144,3 @@ def update_argparse(subparsers):
     parser = subparsers.add_parser('purge')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_purge)
-

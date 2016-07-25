@@ -23,36 +23,36 @@ def main():
     parser = argparse.ArgumentParser()
 
     group = parser.add_argument_group('Messages')
-    group.add_argument("--develop",
+    group.add_argument(
+        "--develop",
         help="show technical details",
         default=False,
-        action='store_true'
-    )
-    group.add_argument("-v", "--verbose",
+        action='store_true')
+    group.add_argument(
+        "-v", "--verbose",
         dest="verbosity",
         help="increase level of messages",
         default=1,
-        action='count'
-    )
-    group.add_argument("-q", "--quiet",
+        action='count')
+    group.add_argument(
+        "-q", "--quiet",
         dest="verbosity",
         help="disable messages (opposite of --verbose)",
         const=0,
-        action='store_const'
-    )
+        action='store_const')
 
     group = parser.add_argument_group('Backup Configuration')
     group = group.add_mutually_exclusive_group()
-    group.add_argument("-c", "--control",
+    group.add_argument(
+        "-c", "--control",
         help="load control file",
         metavar='FILE',
-        default=None,
-    )
-    group.add_argument("-p", "--profile",
+        default=None)
+    group.add_argument(
+        "-p", "--profile",
         help="load named profile",
         metavar='NAME',
-        default=None,
-    )
+        default=None)
 
     subparsers = parser.add_subparsers()
     # get the subcommands from the other modules
@@ -82,7 +82,8 @@ def main():
         sys.stderr.write('\nAborted on user request.\n')
         sys.exit(1)
     except BackupException as e:
-        if args.develop: raise
+        if args.develop:
+            raise
         sys.stderr.write('ERROR: {}\n'.format(e))
         sys.exit(1)
     finally:
