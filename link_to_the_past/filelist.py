@@ -660,7 +660,7 @@ class FileListParser(config_file_parser.ControlFileParser):
     """Parser for file lists."""
 
     def __init__(self, filelist):
-        config_file_parser.ControlFileParser.__init__(self)
+        super().__init__()
         self.filelist = filelist
         self.filelist.set_hash(None)
 

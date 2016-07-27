@@ -40,19 +40,26 @@ def words_in_file(filename, fileobj=None, include_newline=False):
     """
     if fileobj is None:
         fileobj = codecs.open(filename, 'r', 'utf-8')
-    for n, line in enumerate(fileobj):
+    for n, line in enumerate(fileobj, 1):
         # - ensure escaped spaces are do not include a space "\ " -> "\x20"
         # - remove comment
         # - remove whitespace and beginning and end
         # - split on whitespace
         for word in m_comment.sub('', line.replace('\ ', '\\x20')).split():
-            yield Word(word, filename, n+1, line)
+            yield Word(word, filename, n, line)
         if include_newline:
-            yield Word('\n', filename, n+1, line)
+            yield Word('\n', filename, n, line)
 
 
 class ControlFileParser(object):
-    """Parser for a simple language using white space separated words"""
+    """\
+    Parser for a simple language using white space separated words (like
+    Forth).
+
+    Languages can be implemented by subclassing this one. Words are looked up
+    on self, searching for methods with the name ``word_xxx`` where xxx stands
+    for the word in lower case.
+    """
     def __init__(self):
         self.root = '.'
 
@@ -69,7 +76,7 @@ class ControlFileParser(object):
         return self._iterator.__next__()
 
     def interpret(self, word):
-        a = 'word_{}'.format(word)
+        a = 'word_{}'.format(word.lower())
         if hasattr(self, a):
             function = getattr(self, a)
             function()

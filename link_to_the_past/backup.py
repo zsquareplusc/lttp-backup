@@ -75,21 +75,27 @@ class Backup(object):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BackupControl(config_file_parser.ControlFileParser):
-    """Parser for backup control files"""
+    """\
+    Parser for backup control files, takes a backup object and configures it
+    based on the config file.
+    """
 
     def __init__(self, backup):
-        config_file_parser.ControlFileParser.__init__(self)
+        super().__init__()
         self.backup = backup
 
     def word_target(self):
+        """set the target location"""
         self.backup.set_target_path(self.path(self.next_word()))
 
     def word_include(self):
+        """include a path to the backup"""
         path = self.next_word()
         if self.backup.indexer is not None:
             self.backup.indexer.includes.append(indexer.Location(self.path(path)))
 
     def word_exclude(self):
+        """exclude a path from the backup"""
         path = self.next_word()
         if self.backup.indexer is not None:
             self.backup.indexer.excludes.append(indexer.ShellPattern(path))
