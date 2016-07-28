@@ -106,7 +106,12 @@ def action_changes(args):
 
 def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
-    parser = subparsers.add_parser('verify')
+    parser = subparsers.add_parser(
+        'verify',
+        description='Compare current files to the checksums stored in the '
+                    'backup. This is a slow operation as it needs to read '
+                    'all files.',
+        help='compare current files against file list in backup')
     group = parser.add_argument_group('Display Options')
     group.add_argument(
         "-l", "--long",
@@ -116,11 +121,19 @@ def update_argparse(subparsers):
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_verify)
 
-    parser = subparsers.add_parser('integrity')
+    parser = subparsers.add_parser(
+        'integrity',
+        description='Check the files in the backup against modifications by '
+                    'comparing them with the checksum in the file list. This '
+                    'is a slow operation as it needs to read all files.',
+        help='verify backup against its file list')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_integrity)
 
-    parser = subparsers.add_parser('changes')
+    parser = subparsers.add_parser(
+        'changes',
+        description='Compare current files with filelist from backup (timestamps only)',
+        help='show changed files compared to backup')
     parser.add_argument('TIMESPEC2', help='specify other backup or "now" for current files')
     group = parser.add_argument_group('Display Options')
     group.add_argument(

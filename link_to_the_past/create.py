@@ -160,7 +160,10 @@ def action_create(args):
 
 def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
-    parser = subparsers.add_parser('create')
+    parser = subparsers.add_parser(
+        'create',
+        description='Create new backups.',
+        help='create new backups')
     group = parser.add_argument_group('Backup Options')
     group.add_argument(
         "-f", "--force",

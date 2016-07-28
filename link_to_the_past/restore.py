@@ -76,6 +76,7 @@ class Restore(Backup):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_list(args):
     b = Restore()
+    """list available backups"""
     b.evaluate_arguments(args)
     backups = b.find_backups()
     backups.sort()
@@ -87,12 +88,14 @@ def action_list(args):
 
 
 def action_path(args):
+    """show path to selected backup"""
     b = Restore()
     b.evaluate_arguments(args)
     sys.stdout.write('{}\n'.format(b.current_backup_path))
 
 
 def action_ls(args):
+    """show file list"""
     b = Restore()
     b.evaluate_arguments(args)
     if args.PATH:
@@ -105,12 +108,14 @@ def action_ls(args):
 
 
 def action_cp(args):
+    """copy/extract files/dirs"""
     b = Restore()
     b.evaluate_arguments(args)
     b.cp(args.SRC, args.DST, options.recursive)
 
 
 def action_cat(args):
+    """show contents of backuped file"""
     b = Restore()
     b.evaluate_arguments(args)
     item = b.root[args.SRC]
@@ -122,25 +127,31 @@ def action_cat(args):
 
 def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
-    parser = subparsers.add_parser('list')
-    group = parser.add_argument_group('File Selection')
-    group.add_argument(
-        "-r", "--recursive",
-        help="apply operation recursively to all subdirectories",
-        default=False,
-        action='store_true')
+    parser = subparsers.add_parser(
+        'list',
+        description='List all available backups.',
+        help='list available backups')
     parser.set_defaults(func=action_list)
 
-    parser = subparsers.add_parser('path')
+    parser = subparsers.add_parser(
+        'path',
+        description='Print the absolute path to the directory containing the backup.',
+        help='print the path to a backup')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_path)
 
-    parser = subparsers.add_parser('ls')
+    parser = subparsers.add_parser(
+        'ls',
+        description='List files contained in backup.',
+        help='list the contents of a backup')
     parser.add_argument('PATH', nargs='?', default=None)
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_ls)
 
-    parser = subparsers.add_parser('cp')
+    parser = subparsers.add_parser(
+        'cp',
+        description='Copy (extract) files or directories from backup.',
+        help='copy files from a backup')
     parser.add_argument(
         "-r", "--recursive",
         help="apply operation recursively to all subdirectories",
@@ -151,7 +162,10 @@ def update_argparse(subparsers):
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_cp)
 
-    parser = subparsers.add_parser('cat')
+    parser = subparsers.add_parser(
+        'cat',
+        description='Copy contents of files of a backup to stdout (binary).',
+        help='inspect/show files of a backup')
     parser.add_argument('SRC')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_cat)

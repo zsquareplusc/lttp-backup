@@ -107,6 +107,7 @@ def ask_the_question():
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_rm(args):
+    """remove files/directories from backup"""
     b = EditBackup()
     b.evaluate_arguments(args)
     entry = b.root[args.SRC]  # XXX just test if it is there. catch ex and print error
@@ -116,6 +117,7 @@ def action_rm(args):
 
 
 def action_purge(args):
+    """remove entire backups"""
     b = EditBackup()
     b.evaluate_arguments(args)
     sys.stderr.write('Going to remove the entire backup: {}\n'.format(os.path.basename(b.current_backup_path)))
@@ -125,7 +127,10 @@ def action_purge(args):
 
 def update_argparse(subparsers):
     """Add a subparser for the actions provided by this module"""
-    parser = subparsers.add_parser('rm')
+    parser = subparsers.add_parser(
+        'rm',
+        description='Remove files or directories from backup.',
+        help='remove files/dirs from backups')
     parser.add_argument('SRC')
     group = parser.add_argument_group('File Selection')
     group.add_argument(
@@ -141,6 +146,9 @@ def update_argparse(subparsers):
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_rm)
 
-    parser = subparsers.add_parser('purge')
+    parser = subparsers.add_parser(
+        'purge',
+        description='Remove entire backups.',
+        help='remove entire backups')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_purge)
