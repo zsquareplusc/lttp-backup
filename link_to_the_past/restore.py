@@ -11,6 +11,7 @@ Restore and inspection tool.
 """
 import os
 import fnmatch
+import shutil
 import logging
 
 from . import filelist, timespec
@@ -69,14 +70,14 @@ class Restore(Backup):
             action='store')
 
     def evaluate_arguments(self, options):
-        Backup.evaluate_arguments(self, options)
+        super().evaluate_arguments(options)
         self.find_backup_by_time(options.timespec)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def action_list(args):
-    b = Restore()
     """list available backups"""
+    b = Backup()
     b.evaluate_arguments(args)
     backups = b.find_backups()
     backups.sort()
@@ -111,18 +112,21 @@ def action_cp(args):
     """copy/extract files/dirs"""
     b = Restore()
     b.evaluate_arguments(args)
-    b.cp(args.SRC, args.DST, options.recursive)
+    if not os.path.isabs(args.SRC):
+        args.SRC = os.path.abspath(args.SRC)
+    b.cp(args.SRC, args.DST, args.recursive)
 
 
 def action_cat(args):
     """show contents of backuped file"""
     b = Restore()
     b.evaluate_arguments(args)
+    if not os.path.isabs(args.SRC):
+        args.SRC = os.path.abspath(args.SRC)
     item = b.root[args.SRC]
-    # XXX set stdout in binary mode
-    with open(item.backup_path, 'r') as f:
-    #~ with open(item.backup_path, 'rb') as f:
-        sys.stdout.write(f.read(2048))
+    # output to stdout in binary mode
+    with open(item.backup_path, 'rb') as f:
+        shutil.copyfileobj(f, sys.stdout.buffer)
 
 
 def update_argparse(subparsers):
