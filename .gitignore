@@ -1,3 +1,4 @@
 test/example_backups/*
 *.pyc
 __pycache__
+/lltp.egg-info
