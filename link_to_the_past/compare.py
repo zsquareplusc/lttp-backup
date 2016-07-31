@@ -16,15 +16,17 @@ from . import filelist
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def print_changes(iterator, long_format):
+def print_changes(iterator, long_format, show_all=False):
     for root, dirs, files in iterator:
         # sort by name again
         entries = []
-        entries.extend((entry, ' ') for entry in files.same)
+        if show_all:
+            entries.extend((entry, ' ') for entry in files.same)
         entries.extend((entry, 'M') for entry in files.changed)
         entries.extend((entry, 'A') for entry in files.added)
         entries.extend((entry, 'R') for entry in files.removed)
-        entries.extend((entry, ' ') for entry in dirs.same)
+        if show_all:
+            entries.extend((entry, ' ') for entry in dirs.same)
         entries.extend((entry, 'A') for entry in dirs.added)
         entries.extend((entry, 'R') for entry in dirs.removed)
         entries.sort()
@@ -50,7 +52,7 @@ def action_verify(args):
         #~ path = '*'
     scan = Create()
     scan.evaluate_arguments(args)
-    scan.source_root.set_hash(scan.hash_name)   # shoun't this be done automatically?
+    scan.source_root.set_hash(scan.hash_name)   # shouldn't this be done automatically?
     scan.indexer.scan()
     # XXX this calculates the hash of added files for which we can not compare the hash. wasted time :/
     for path, dirs, files in scan.source_root.walk():
@@ -101,11 +103,11 @@ def action_changes(args):
         other_backup.find_backup_by_time(args.TIMESPEC2)
     if b.current_backup_path == other_backup.current_backup_path:
         raise BackupException('Both TIMESPECs point to the same backup')
-    print_changes(b.root.compare(other_backup.root), args.long)
+    print_changes(b.root.compare(other_backup.root), args.long, args.all)
 
 
 def update_argparse(subparsers):
-    """Add a subparser for the actions provided by this module"""
+    """Add a sub-parser for the actions provided by this module"""
     parser = subparsers.add_parser(
         'verify',
         description='Compare current files to the checksums stored in the '
@@ -115,7 +117,7 @@ def update_argparse(subparsers):
     group = parser.add_argument_group('Display Options')
     group.add_argument(
         "-l", "--long",
-        help="Show detailed file info",
+        help="show detailed file info",
         default=False,
         action='store_true')
     Restore.populate_arguments(parser)
@@ -132,13 +134,20 @@ def update_argparse(subparsers):
 
     parser = subparsers.add_parser(
         'changes',
-        description='Compare current files with filelist from backup (timestamps only)',
-        help='show changed files compared to backup')
+        description='Compare current files or a second backup with filelist '
+                    'from backup (timestamps only). If TIMESPEC2 is "now", '
+                    'the current files are checked.',
+        help='show changed files compared to backup or now')
     parser.add_argument('TIMESPEC2', help='specify other backup or "now" for current files')
     group = parser.add_argument_group('Display Options')
     group.add_argument(
         "-l", "--long",
-        help="Show detailed file info",
+        help="show detailed file info",
+        default=False,
+        action='store_true')
+    group.add_argument(
+        "-a", "--all",
+        help="only show all, not only modified items",
         default=False,
         action='store_true')
     Restore.populate_arguments(parser)
