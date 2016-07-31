@@ -15,7 +15,7 @@ import logging
 import sys
 import time
 
-from link_to_the_past import create, restore, edit, compare
+from link_to_the_past import create, restore, edit, compare, profile
 from link_to_the_past.error import BackupException
 
 class HelpAllAction(argparse.Action):
@@ -76,12 +76,12 @@ def main():
     group = group.add_mutually_exclusive_group()
     group.add_argument(
         "-c", "--control",
-        help="load control file",
+        help="load control file at given path",
         metavar='FILE',
         default=None)
     group.add_argument(
         "-p", "--profile",
-        help="load named profile",
+        help="load named profile (located in default config directory)",
         metavar='NAME',
         default=None)
 
@@ -107,6 +107,8 @@ def main():
 
     if args.develop:
         logging.info('Command line arguments are {}'.format(args))
+
+    logging.debug('Profile directory is "{}"'.format(profile.profile_directory))
 
     t_start = time.time()
     try:
