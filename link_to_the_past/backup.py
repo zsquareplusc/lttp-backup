@@ -108,11 +108,8 @@ class BackupControl(config_file_parser.ControlFileParser):
 
     def word_load_config(self):
         """include an other configuration file"""
-        c = self.__class__(self.backup)
-        path = str(self.next_word())
-        if not os.path.isabs(path):
-            path = os.path.join(self.root, path)
-        c.load_file(path)
+        c = self.__class__(self.backup)  # create a new instance of the same class
+        c.load_file(self.path(str(self.next_word())))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
