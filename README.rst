@@ -18,7 +18,7 @@ Key Features
 - Changed files are copied entirely.
 
 - Check before doing. Available space and capability to create the required
-  number of files is checked before the copying starts.
+  number of files (inodes) is checked before the copying starts.
 
 - Does not rely on external tools (``cp``, ``rsync`` etc.).
 
@@ -32,7 +32,9 @@ More Features
 
 - Files are checked by modification date and size.
 
-- Does not erase failed backup. It's your decision to delete these.
+- Does not erase failed backup. It's your decision to delete these. They
+  can easilily be identified by the name of the directory (directories
+  ending with ``..._incomplete``).
 
 - File systems are not crossed. Use ``include`` directive in configuration
   file to manually include the path or an ``exclude`` directive to suppress
@@ -74,7 +76,7 @@ Caveats
 .. warning:: Filenames with encoding errors are skipped! (A warning is printed)
 
 
-Yes it not the first program of that kind. The reason it exists is that
+Yes it is not the first program of that kind. The reason it exists is that
 existing programs did, for me, not work well with some files or amount of
 data. There is no need to use ``rsync`` to make local copies. Analyzing the files
 often takes more time than simply copying it.
@@ -214,20 +216,19 @@ The ``-t`` option accepts the following expressions:
   and this name is simply the date/time strings as seen above. In case of
   multiple matches the most recent one is picked.
 
+The ``changes`` action requires a ``TIMESPEC2`` argument which can also have
+the value ``now`` to represent the current files instead of a backup.
+
 
 Profiles
 ========
 A profile is the same as a configuration file but located in a special place.
 The idea is to make it easier to work with multiple configurations.
 
-Without any ``-p`` or ``-c`` options, a default configuration is searched.
-
-1) A file named ``default.profile`` in the current directory
-2) A file named ``default.profile`` in the users ``.link_to_the_past``
-   directory
+Without any ``-p`` or ``-c`` options, a default configuration is loaded.
 
 Named profiles are loaded with the ``-p <name>`` option. A file 
-``<name>.profile`` is searched in the users ``.link_to_the_past``
+``<name>.profile`` is searched in the users ``~/.config/link-to-the-past``
 directory.
 
 
@@ -248,8 +249,8 @@ Backup control files
     excludes files and directories matching the pattern
 
 ``load_config <path>``
-    Load an other configuration file. This may be useful if a common excludes
-    list is (re-)used in different configuration files.
+    Load an other configuration file. This may be useful if a common
+    include/exclude list is (re-)used in different configuration files.
 
 ``hash <name>``
     Specify the hash function to use. No hashing will be performed if the
