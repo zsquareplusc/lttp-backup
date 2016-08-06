@@ -134,7 +134,7 @@ class Create(Backup):
                     bytes_copied += p.stat.size
                 # XXX make this optional
                 if self.bytes_required:
-                    sys.stderr.write('{:3d}%\r'.format((100.0*bytes_copied/self.bytes_required)))
+                    sys.stderr.write('{:5.1f}%\r'.format((100.0*bytes_copied/self.bytes_required)))
             # secure directories (make them read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
