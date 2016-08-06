@@ -18,6 +18,8 @@ backups the further back in time they were made.
 """
 
 import shutil
+import stat
+import os
 
 from .restore import *
 from .error import BackupException
