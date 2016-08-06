@@ -26,6 +26,7 @@ import codecs
 import time
 import stat
 import logging
+import re
 
 from . import config_file_parser, hashes
 
@@ -141,10 +142,33 @@ def escaped(path):
     return path.translate(ESCAPE_CONTROLS)
 
 
-def unescape(path):
-    """Escape control non printable characters and the space"""
-    return codecs.decode(path, 'unicode-escape').replace('\\ ', ' ')
-
+def unescape(text):
+    regex = re.compile('\\\\(\\\\|[0-7]{1,3}|x.[0-9a-f]?|[\'"abfnrt]|.|$)')
+    def replace(m):
+        b = m.group(1)
+        if len(b) == 0:
+            raise ValueError("Invalid character escape: '\\'.")
+        i = b[0]
+        if i == 'x':
+            v = chr(int(b[1:], 16))
+        elif '0' <= i <= '9':
+            v = chr(int(b, 8))
+        elif i == '"': return '"'
+        elif i == "'": return "'"
+        elif i == '\\': return '\\'
+        elif i == 'a': return '\a'
+        elif i == 'b': return '\b'
+        elif i == 'f': return '\f'
+        elif i == 'n': return '\n'
+        elif i == 'r': return '\r'
+        elif i == 't': return '\t'
+        else:
+            s = b.decode('ascii')
+            raise UnicodeDecodeError(
+                'stringescape', text, m.start(), m.end(), "Invalid escape: %r" % s
+            )
+        return v
+    return regex.sub(replace, text)
 
 def join(root, path):
     return os.path.normpath('{}{}{}'.format(root, os.sep, path))
@@ -269,6 +293,23 @@ class BackupPath(object):
         """Return absolute path to file relative to the reference"""
         return os.path.normpath(join(self.filelist.reference, self.path))
 
+    def __lt__(self, other):
+        return self.path < other.path
+
+    def __eq__(self, other):
+        same_hash = True    # if can't compare - ignore
+        # hashes must be made using same algorithm and must be calculated (not '-')
+        if self.filelist.hash_name == other.filelist.hash_name:
+            if self.data_hash != '-' and other.data_hash != '-':
+                same_hash = (self.data_hash == other.data_hash)
+        return (same_hash and
+                self.stat.uid == other.stat.uid and
+                self.stat.gid == other.stat.gid and
+                self.stat.mode == other.stat.mode and
+                self.stat.size == other.stat.size and
+                abs(self.stat.mtime - other.stat.mtime) <= 0.00001 and  # 10us; as it is a float...
+                self.stat.flags == other.stat.flags)
+
     def __str__(self):
         return '{} {:4} {:4} {:7} {} {}'.format(
             mode_to_chars(self.stat.mode),
@@ -294,23 +335,6 @@ class BackupFile(BackupPath):
     """Information about a file as well as operations"""
 
     BLOCKSIZE = 1024*256   # 256kB
-
-    def __lt__(self, other):
-        return self.path < other.path
-
-    def __eq__(self, other):
-        same_hash = True    # if can't compare - ignore
-        # hashes must be made using same algorithm and must be calculated (not '-')
-        if self.filelist.hash_name == other.filelist.hash_name:
-            if self.data_hash != '-' and other.data_hash != '-':
-                same_hash = (self.data_hash == other.data_hash)
-        return (same_hash and
-                self.stat.uid == other.stat.uid and
-                self.stat.gid == other.stat.gid and
-                self.stat.mode == other.stat.mode and
-                self.stat.size == other.stat.size and
-                abs(self.stat.mtime - other.stat.mtime) <= 0.00001 and  # 10us; as it is a float...
-                self.stat.flags == other.stat.flags)
 
     def cp(self, dst, permissions=True):
         """\
