@@ -88,6 +88,7 @@ class ControlFileParser(object):
         Convert path to an absolute path. If it was relative, it is relative to
         the location of the loaded configuration file.
         """
+        path = os.path.expandvars(os.path.expanduser(path))
         if not os.path.isabs(path):
             path = os.path.join(self.root, path)
         return path

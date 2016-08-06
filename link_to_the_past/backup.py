@@ -98,7 +98,7 @@ class BackupControl(config_file_parser.ControlFileParser):
         """exclude a path from the backup"""
         path = self.next_word()
         if self.backup.indexer is not None:
-            self.backup.indexer.excludes.append(indexer.ShellPattern(path))
+            self.backup.indexer.excludes.append(indexer.ShellPattern(self.path(path)))
 
     def word_hash(self):
         """Set the hash function"""
@@ -109,7 +109,7 @@ class BackupControl(config_file_parser.ControlFileParser):
     def word_load_config(self):
         """include an other configuration file"""
         c = self.__class__(self.backup)  # create a new instance of the same class
-        c.load_file(self.path(str(self.next_word())))
+        c.load_file(self.path(self.next_word()))
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
