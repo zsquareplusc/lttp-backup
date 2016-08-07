@@ -43,6 +43,8 @@ def nice_bytes(value):
     '1.0kB'
     >>> nice_bytes(2e9)
     '2.0GB'
+    >>> nice_bytes(48)
+    '48B'
     """
     if value < 0:
         raise ValueError('Byte count can not be negative: {}'.format(value))
@@ -54,7 +56,7 @@ def nice_bytes(value):
     if exp:
         return '{:.1f}{}B'.format(value, EXPONENTS[exp])
     else:
-        return '{}B'.format(value)
+        return '{:.0f}B'.format(value)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,8 +138,8 @@ def escaped(path):
     '\\\\ '
     >>> escaped('\\n')
     '\\\\n'
-    >>> escaped(u'\u2000')
-    '\\\\u2000'
+    >>> escaped('\u2000')
+    '\\u2000'
     """
     return path.translate(ESCAPE_CONTROLS)
 
@@ -311,7 +313,7 @@ class BackupPath(object):
                 self.stat.flags == other.stat.flags)
 
     def __str__(self):
-        return '{} {:4} {:4} {:7} {} {}'.format(
+        return '{} {:4} {:4} {:>7} {} {}'.format(
             mode_to_chars(self.stat.mode),
             self.stat.uid,
             self.stat.gid,
@@ -719,10 +721,10 @@ class FileListParser(config_file_parser.ControlFileParser):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
-    f = FileList()
-    f.load('test/example_backups/2012-09-07_043453/file_list')
-    for entry in f.flattened():
-        print(entry)
+    #~ f = FileList()
+    #~ f.load('test/example_backups/2012-09-07_043453/file_list')
+    #~ for entry in f.flattened():
+        #~ print(entry)
 
     import doctest
     doctest.testmod()
