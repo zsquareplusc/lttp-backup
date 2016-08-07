@@ -132,7 +132,7 @@ ESCAPE_CONTROLS[ord('\\')] = '\\\\'
 
 def escaped(path):
     """\
-    Escape control non printable characters and the space.
+    Escape control, non printable characters and the space.
 
     >>> escaped(' ')
     '\\\\ '
@@ -144,8 +144,8 @@ def escaped(path):
     return path.translate(ESCAPE_CONTROLS)
 
 
+re_unescape = re.compile('\\\\(\\\\|[0-7]{1,3}|x.[0-9a-f]?|[\'"abfnrt0]|.|$)')
 def unescape(text):
-    regex = re.compile('\\\\(\\\\|[0-7]{1,3}|x.[0-9a-f]?|[\'"abfnrt]|.|$)')
     def replace(m):
         b = m.group(1)
         if len(b) == 0:
@@ -164,13 +164,15 @@ def unescape(text):
         elif i == 'n': return '\n'
         elif i == 'r': return '\r'
         elif i == 't': return '\t'
+        elif i == '0': return '\0'
         else:
             s = b.decode('ascii')
             raise UnicodeDecodeError(
                 'stringescape', text, m.start(), m.end(), "Invalid escape: %r" % s
             )
         return v
-    return regex.sub(replace, text)
+    return re_unescape.sub(replace, text)
+
 
 def join(root, path):
     return os.path.normpath('{}{}{}'.format(root, os.sep, path))
