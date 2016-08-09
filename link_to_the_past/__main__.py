@@ -94,7 +94,6 @@ def main():
     # get the subcommands from the other modules
     for module in (create, edit, compare, restore):
         module.update_argparse(subparsers)
-    # execute the function that the subparser must set
     args = parser.parse_args()
 
     if args.verbosity > 1:
@@ -103,7 +102,9 @@ def main():
         level = logging.INFO
     else:
         level = logging.ERROR
-    logging.basicConfig(level=level)
+    logging.basicConfig(
+        level=level,
+        format='\x1b[2m• %(message)s\x1b[0m')
 
     if args.develop:
         logging.info('Command line arguments are {}'.format(args))
@@ -112,6 +113,7 @@ def main():
 
     t_start = time.time()
     try:
+        # execute the function that the subparser must set
         if hasattr(args, 'func'):
             args.func(args)
         else:
