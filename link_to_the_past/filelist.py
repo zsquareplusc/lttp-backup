@@ -126,6 +126,7 @@ ESCAPE_CONTROLS[7] = r'\a'
 ESCAPE_CONTROLS[8] = r'\b'
 ESCAPE_CONTROLS[11] = r'\v'
 ESCAPE_CONTROLS[12] = r'\f'
+ESCAPE_CONTROLS[23] = r'\x23' # escape comment char #
 ESCAPE_CONTROLS[32] = r'\ '
 ESCAPE_CONTROLS[ord('\\')] = '\\\\'
 
