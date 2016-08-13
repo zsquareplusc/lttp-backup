@@ -230,28 +230,17 @@ class Stat(object):
     def write(self, path, chmod_only=False):
         """\
         Apply all stat info (mode bits, atime, mtime, flags) to path.
-        Only useful when called on files but not on symlinks (links are ignored).
         """
-        if stat.S_ISLNK(self.mode):
-            pass
-            # XXX should have l-versions of all functions - missing in Python os mod. :(
-            #~ os.lutime(dst, (self.st_atime, self.st_mtime))   # XXX missing in os module!
-            #~ os.system('touch --no-dereference -r "%s" "%s"' % (escaped(self.path), escaped(dst))) # XXX insecure!
-        else:
-            if not chmod_only:
-                os.utime(path, (self.atime, self.mtime))
-                os.chown(path, self.uid, self.gid)
-                if hasattr(os, 'chflags'):
-                    try:
-                        os.chflags(path, self.flags)
-                    except OSError as why:
-                        if (not hasattr(errno, 'EOPNOTSUPP') or why.errno != errno.EOPNOTSUPP):
-                            raise
-            os.chmod(path, self.mode)
+        if not chmod_only:
+            os.utime(path, (self.atime, self.mtime), follow_symlinks=False)
+            os.chown(path, self.uid, self.gid, follow_symlinks=False)
+            os.chflags(path, self.flags, follow_symlinks=False)
+        os.chmod(path, self.mode, follow_symlinks=False)
 
     def make_read_only(self, path):
         """Use chmod to apply the modes with W bits cleared"""
-        # XXX should have l-versions of all functions - missing in Python os mod. :(
+        # follow_symlinks=False is not always supported on links (at least for some values?)
+        #~ os.chmod(path, self.mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH), follow_symlinks=False)
         if not stat.S_ISLNK(self.mode):
             os.chmod(path, self.mode & ~(stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH))
 
