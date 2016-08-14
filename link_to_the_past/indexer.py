@@ -43,26 +43,25 @@ class Location(object):
     def _scan(self, indexer, parent, device):
         """scan recursively and handle excluded files and directories on the fly"""
         logging.debug('scanning {!r}'.format(parent.path))
-        for name in os.listdir(parent.path):
-            path = os.path.join(parent.path, name)
-            if indexer.is_included(path):
-                #~ logging.debug('is included %r' % (path,))
+        for direntry in os.scandir(parent.path):
+            if indexer.is_included(direntry.path):
+                #~ logging.debug('is included %r' % (direntry.path,))
                 try:
-                    stat_now = os.lstat(path)
+                    stat_now = direntry.stat(follow_symlinks=False)
                 except OSError:  # permission error
-                    logging.error('access failed, ignoring: {}'.format(path))
+                    logging.error('access failed, ignoring: {!r}'.format(direntry.path))
                     continue
                 # do not cross filesystem boundaries
                 if stat_now.st_dev != device:
-                    logging.warning('will not cross filesystems, ignore: {!r}'.format(path))
+                    logging.warning('will not cross filesystems, ignoring: {!r}'.format(direntry.path))
                     continue
                 # store dirs and files
                 mode = stat_now.st_mode
                 if stat.S_ISDIR(mode):
-                    d = parent.new_dir(name, stat_now=stat_now)
+                    d = parent.new_dir(direntry.name, stat_now=stat_now)
                     self._scan(indexer, d, device)
                 elif stat.S_ISREG(mode) or stat.S_ISLNK(mode):
-                    parent.new_file(name, stat_now=stat_now)
+                    parent.new_file(direntry.name, stat_now=stat_now)
                 #~ elif stat.S_ISCHR(mode):
                 #~ elif stat.S_ISBLK(mode):
                 #~ elif stat.S_ISFIFO(mode):
@@ -70,7 +69,7 @@ class Location(object):
                 #~ else:
                     # ignore everything else
             #~ else:
-                #~ logging.debug('is excluded %r' % (path,))
+                #~ logging.debug('is excluded %r' % (direntry.path,))
 
     def scan(self, indexer):
         """Find all files in the source directory"""
