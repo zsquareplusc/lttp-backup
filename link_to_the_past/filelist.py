@@ -126,8 +126,8 @@ ESCAPE_CONTROLS[7] = r'\a'
 ESCAPE_CONTROLS[8] = r'\b'
 ESCAPE_CONTROLS[11] = r'\v'
 ESCAPE_CONTROLS[12] = r'\f'
-ESCAPE_CONTROLS[23] = r'\x23' # escape comment char #
 ESCAPE_CONTROLS[32] = r'\ '
+ESCAPE_CONTROLS[35] = r'\x23' # escape comment char #
 ESCAPE_CONTROLS[ord('\\')] = '\\\\'
 
 
@@ -146,33 +146,34 @@ def escaped(path):
 
 
 re_unescape = re.compile('\\\\(\\\\|[0-7]{1,3}|x.[0-9a-f]?|[\'"abfnrt0]|.|$)')
+
+def _replace(m):
+    b = m.group(1)
+    if len(b) == 0:
+        raise ValueError("Invalid character escape: '\\'.")
+    i = b[0]
+    if i == 'x':
+        v = chr(int(b[1:], 16))
+    elif '0' <= i <= '9':
+        v = chr(int(b, 8))
+    elif i == '"': return '"'
+    elif i == "'": return "'"
+    elif i == '\\': return '\\'
+    elif i == 'a': return '\a'
+    elif i == 'b': return '\b'
+    elif i == 'f': return '\f'
+    elif i == 'n': return '\n'
+    elif i == 'r': return '\r'
+    elif i == 't': return '\t'
+    elif i == '0': return '\0'
+    else:
+        raise UnicodeDecodeError(
+            'unescape', text, m.start(), m.end(), "Invalid escape: {!r}".format(b)
+        )
+    return v
+
 def unescape(text):
-    def replace(m):
-        b = m.group(1)
-        if len(b) == 0:
-            raise ValueError("Invalid character escape: '\\'.")
-        i = b[0]
-        if i == 'x':
-            v = chr(int(b[1:], 16))
-        elif '0' <= i <= '9':
-            v = chr(int(b, 8))
-        elif i == '"': return '"'
-        elif i == "'": return "'"
-        elif i == '\\': return '\\'
-        elif i == 'a': return '\a'
-        elif i == 'b': return '\b'
-        elif i == 'f': return '\f'
-        elif i == 'n': return '\n'
-        elif i == 'r': return '\r'
-        elif i == 't': return '\t'
-        elif i == '0': return '\0'
-        else:
-            s = b.decode('ascii')
-            raise UnicodeDecodeError(
-                'stringescape', text, m.start(), m.end(), "Invalid escape: %r" % s
-            )
-        return v
-    return re_unescape.sub(replace, text)
+    return re_unescape.sub(_replace, text)
 
 
 def join(root, path):
