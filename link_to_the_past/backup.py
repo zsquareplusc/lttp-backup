@@ -70,7 +70,7 @@ class Backup(object):
         try:
             self.load_configuration(args.control)
         except IOError as e:
-            sys.stderr.write('ERROR: Failed to load configuration: {}\n'.format(e))
+            logging.error('Failed to load configuration: {}'.format(e))
             sys.exit(1)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
