@@ -104,7 +104,11 @@ def main():
         level = logging.ERROR
     logging.basicConfig(
         level=level,
-        format='\x1b[2m• %(message)s\x1b[0m')
+        format='%(levelname)s%(message)s\x1b[0m')
+    logging.addLevelName(logging.DEBUG, '\x1b[2m⋅ ')
+    logging.addLevelName(logging.INFO, '\x1b[2m• ')
+    logging.addLevelName(logging.WARNING, '\x1b[33;1mWARNING: ')
+    logging.addLevelName(logging.ERROR, '\x1b[31;1mERROR: ')
 
     if args.develop:
         logging.info('Command line arguments are {}'.format(args))
@@ -119,12 +123,12 @@ def main():
         else:
             parser.error('action misssing')
     except KeyboardInterrupt:
-        sys.stderr.write('\nAborted on user request.\n')
+        logging.info('Aborted on user request.')
         sys.exit(1)
     except BackupException as e:
         if args.develop:
             raise
-        sys.stderr.write('ERROR: {}\n'.format(e))
+        logging.error('{}'.format(e))
         sys.exit(1)
     finally:
         t_end = time.time()
