@@ -105,7 +105,7 @@ def main():
     logging.basicConfig(
         level=level,
         format='%(levelname)s%(message)s\x1b[0m')
-    logging.addLevelName(logging.DEBUG, '\x1b[2m⋅ ')
+    logging.addLevelName(logging.DEBUG, '\x1b[2m· ')
     logging.addLevelName(logging.INFO, '\x1b[2m• ')
     logging.addLevelName(logging.WARNING, '\x1b[33;1mWARNING: ')
     logging.addLevelName(logging.ERROR, '\x1b[31;1mERROR: ')
