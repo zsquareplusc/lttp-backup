@@ -590,7 +590,7 @@ class BackupDirectory(BackupPath):
             for entry in self.entries:
                 if entry.name == name:
                     return entry
-        raise KeyError('no such directory: {}'.format(escaped(name)))
+        raise KeyError('no such file or directory: {}'.format(escaped(name)))
 
     def new_dir(self, name, *args, **kwargs):
         """Create a new sub-directory in this directory"""

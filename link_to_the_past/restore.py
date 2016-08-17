@@ -123,10 +123,14 @@ def action_cat(args):
     b.evaluate_arguments(args)
     if not os.path.isabs(args.SRC):
         args.SRC = os.path.abspath(args.SRC)
-    item = b.root[args.SRC]
-    # output to stdout in binary mode
-    with open(item.backup_path, 'rb') as f:
-        shutil.copyfileobj(f, sys.stdout.buffer)
+    try:
+        item = b.root[args.SRC]
+    except KeyError as e:
+        logging.error('file not found: {}'.format(e))
+    else:
+        # output to stdout in binary mode
+        with open(item.backup_path, 'rb') as f:
+            shutil.copyfileobj(f, sys.stdout.buffer)
 
 
 def update_argparse(subparsers):
