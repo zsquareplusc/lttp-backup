@@ -100,7 +100,9 @@ def action_ls(args):
     b = Restore()
     b.evaluate_arguments(args)
     if args.PATH:
-        path = os.sep + args.PATH
+        if not os.path.isabs(args.PATH):
+            args.PATH = os.path.abspath(args.PATH)
+        path = args.PATH
     else:
         path = '*'
     for item in b.root.flattened():
