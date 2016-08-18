@@ -102,11 +102,18 @@ def action_ls(args):
     if args.PATH:
         if not os.path.isabs(args.PATH):
             args.PATH = os.path.abspath(args.PATH)
-        path = args.PATH
+    try:
+        item = b.root[args.PATH]
+    except KeyError as e:
+        logging.error('file or directory not found: {}'.format(e))
     else:
-        path = '*'
-    for item in b.root.flattened():
-        if fnmatch.fnmatch(item.path, path):
+        if isinstance(item, filelist.BackupDirectory):
+            if args.recursive:
+                for item in item.flattened():
+                    sys.stdout.write('{}\n'.format(item))
+            else:
+                sys.stdout.write('{}\n'.format(item))
+        else:
             sys.stdout.write('{}\n'.format(item))
 
 
@@ -154,7 +161,12 @@ def update_argparse(subparsers):
         'ls',
         description='List files contained in backup.',
         help='list the contents of a backup')
-    parser.add_argument('PATH', nargs='?', default=None)
+    parser.add_argument('PATH', default=None)
+    parser.add_argument(
+        "-r", "--recursive",
+        help="apply operation recursively to all subdirectories",
+        default=False,
+        action='store_true')
     Restore.populate_arguments(parser)
     parser.set_defaults(func=action_ls)
 
