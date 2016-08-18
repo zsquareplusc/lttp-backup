@@ -610,6 +610,8 @@ class BackupDirectory(BackupPath):
         for entry in self.flattened():
             sys.stdout.write('{}\n'.format(entry))
 
+    def __iter__(self):
+        return iter(self.entries)
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileList(BackupDirectory):
