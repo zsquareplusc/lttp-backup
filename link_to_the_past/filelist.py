@@ -458,7 +458,7 @@ class BackupDirectory(BackupPath):
 
     def __init__(self, *args, **kwargs):
         BackupPath.__init__(self, *args, **kwargs)
-        self.entries = []
+        self.entries = {}
 
     #~ def check_changes(self):
         #~ """Directories are always created"""
@@ -481,7 +481,7 @@ class BackupDirectory(BackupPath):
         os.makedirs(dst)
         if recursive:
             # XXX still copy files of a directory in non recusive mode
-            for entry in self.entries:
+            for entry in self.entries.values():
                 if isinstance(entry, BackupDirectory):
                     entry.cp(os.path.join(dst, entry.name), permissions=permissions, recursive=True)
                 else:
@@ -494,7 +494,7 @@ class BackupDirectory(BackupPath):
         """Generator yielding all directories and files recursively"""
         if include_self:
             yield self
-        for entry in self.entries:
+        for entry in self.entries.values():
             yield entry
             if isinstance(entry, BackupDirectory):
                 for x in entry.flattened():
@@ -504,7 +504,7 @@ class BackupDirectory(BackupPath):
         """Generator yielding all directories and files recursively"""
         files = []
         dirs = []
-        for entry in self.entries:
+        for entry in self.entries.values():
             if isinstance(entry, BackupDirectory):
                 dirs.append(entry)
             else:
@@ -533,8 +533,8 @@ class BackupDirectory(BackupPath):
         #~ logging.debug('compare: %s' % (escaped(self.path),))
         files = CompareResult()
         dirs = CompareResult()
-        ref = list(other.entries)  # work on copy
-        for entry in self.entries:
+        ref = list(other.entries.values())  # work on copy
+        for entry in self.entries.values():
             for ref_entry in ref:
                 if entry.path == ref_entry.path:
                     # XXX handle dirs that were files and vice versa
@@ -581,27 +581,25 @@ class BackupDirectory(BackupPath):
                 yield (self.path, c_dirs, c_files)
 
     def __getitem__(self, name):
-        if os.sep in name:
-            head, tail = name.split(os.sep, 1)
-            for entry in self.entries:
-                if entry.name == head:
-                    return entry[tail]  # XXX only if dir
-        else:
-            for entry in self.entries:
-                if entry.name == name:
-                    return entry
-        raise KeyError('no such file or directory: {}'.format(escaped(name)))
+        try:
+            if os.sep in name:
+                head, tail = name.split(os.sep, 1)
+                return self.entries[head][tail]  # XXX only if dir
+            else:
+                return self.entries[name]
+        except KeyError:
+            raise KeyError('no such file or directory: {}'.format(escaped(name)))
 
     def new_dir(self, name, *args, **kwargs):
         """Create a new sub-directory in this directory"""
         entry = BackupDirectory(name, parent=self, filelist=self.filelist, *args, **kwargs)
-        self.entries.append(entry)
+        self.entries[name] = entry
         return entry
 
     def new_file(self, name, *args, **kwargs):
         """Create a new file in this directory"""
         entry = BackupFile(name, parent=self, filelist=self.filelist, *args, **kwargs)
-        self.entries.append(entry)
+        self.entries[name] = entry
         return entry
 
     def print_listing(self, message='Listing'):
@@ -611,7 +609,7 @@ class BackupDirectory(BackupPath):
             sys.stdout.write('{}\n'.format(entry))
 
     def __iter__(self):
-        return iter(self.entries)
+        return self.entries.values()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileList(BackupDirectory):
@@ -665,17 +663,6 @@ class FileList(BackupDirectory):
             name = name[len(self.name):]
         return BackupDirectory.__getitem__(self, name)
 
-    def new_dir(self, name, *args, **kwargs):
-        entry = BackupDirectory(name, parent=self, filelist=self, *args, **kwargs)
-        self.entries.append(entry)
-        return entry
-
-    def new_file(self, name, *args, **kwargs):
-        entry = BackupFile(name, parent=self, filelist=self, *args, **kwargs)
-        self.entries.append(entry)
-        return entry
-
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileListParser(config_file_parser.ControlFileParser):
     """Parser for file lists."""
@@ -698,20 +685,21 @@ class FileListParser(config_file_parser.ControlFileParser):
             entry = BackupDirectory(filelist=self.filelist)
         else:
             entry = BackupFile(filelist=self.filelist)
-        entry.stat.mode = st_mode
-        entry.stat.uid = int(self.next_word())
-        entry.stat.gid = int(self.next_word())
-        entry.stat.size = int(self.next_word())
-        entry.stat.atime = float(self.next_word())
-        entry.stat.mtime = float(self.next_word())
+        s = entry.stat
+        s.mode = st_mode
+        s.uid = int(self.next_word())
+        s.gid = int(self.next_word())
+        s.size = int(self.next_word())
+        s.atime = float(self.next_word())
+        s.mtime = float(self.next_word())
         st_flags = self.next_word()
         if st_flags != '-':
-            entry.stat.flags = int(st_flags)
+            s.flags = int(st_flags)
         entry.data_hash = self.next_word()
         path = unescape(self.next_word())
         path, entry.name = os.path.split(path)
         entry.parent = self.filelist[path]
-        entry.parent.entries.append(entry)
+        entry.parent.entries[entry.name] = entry
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
