@@ -19,6 +19,8 @@ class Word(str):
     """\
     Like a string but annotated with the position in the source file it was read from.
     """
+    __slots__ = ['filename', 'lineno', 'text']
+
     def __new__(cls, word, filename, lineno, text):
         self = str.__new__(cls, word)
         self.filename = filename
@@ -39,7 +41,7 @@ def words_in_file(filename, fileobj=None, include_newline=False):
     with position in source file.
     """
     if fileobj is None:
-        fileobj = codecs.open(filename, 'r', 'utf-8')
+        fileobj = open(filename, 'r', encoding='utf-8')
     for n, line in enumerate(fileobj, 1):
         # - ensure escaped spaces are do not include a space "\ " -> "\x20"
         # - remove comment
@@ -65,23 +67,20 @@ class ControlFileParser(object):
 
     def parse(self, iterator):
         self._iterator = iterator   # used in next_word
-        try:
-            while True:
-                self.interpret(self.next_word())
-        except StopIteration:
-            pass
+        for word in iterator:
+            self.interpret(word)
         self._iterator = None
 
     def next_word(self):
         return self._iterator.__next__()
 
     def interpret(self, word):
-        a = 'word_{}'.format(word.lower())
-        if hasattr(self, a):
-            function = getattr(self, a)
-            function()
-        else:
+        try:
+            function = getattr(self, 'word_{}'.format(word.lower()))
+        except AttributeError:
             raise SyntaxError('unknown word: {!r}'.format(word))
+        else:
+            function()
 
     def path(self, path):
         """\
