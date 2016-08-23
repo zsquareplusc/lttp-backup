@@ -10,13 +10,10 @@ from link_to_the_past import config_file_parser
 class Tester(config_file_parser.ControlFileParser):
 
     def __init__(self):
+        super().__init__()
         self.count = 0
 
     def word_test(self):
-        self.count += 1
-        self.next_word()
-
-    def test(self):
         self.count += 1
         self.next_word()
 
