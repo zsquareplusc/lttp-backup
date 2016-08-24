@@ -21,7 +21,7 @@ data = io.StringIO("test "*1000)
 t = Tester()
 
 print(min(timeit.repeat(
-    stmt='data.seek(0); t.parse(config_file_parser.words_in_file("<test>", fileobj=data))',
+    stmt='data.seek(0); t.parse(config_file_parser.words_in_file_quick("<test>", fileobj=data))',
     #~ setup='',
     number=100,
     globals={'Tester':Tester, 'config_file_parser':config_file_parser, 'data':data, 't':t})))

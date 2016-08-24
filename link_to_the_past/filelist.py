@@ -632,7 +632,7 @@ class FileList(BackupDirectory):
     def load(self, filename):
         logging.debug('Loading file list {}'.format(filename))
         c = FileListParser(self)
-        c.load_file(filename)
+        c.load_file(filename, quick=True)
 
     def save(self, filename):
         """Write a new version of the file list"""
