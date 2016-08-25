@@ -14,6 +14,7 @@ import logging
 
 from . import filelist, indexer
 from .backup import *
+from .speaking import nice_bytes
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -89,8 +90,8 @@ class Create(Backup):
         bytes_free = t.f_bsize * t.f_bavail
         if bytes_free < self.bytes_required:
             raise BackupException('not enough free space on target {} available but {} required'.format(
-                filelist.nice_bytes(bytes_free),
-                filelist.nice_bytes(self.bytes_required),
+                nice_bytes(bytes_free),
+                nice_bytes(self.bytes_required),
                 ))
         if t.f_favail < len_iter(self.source_root.flattened()):
             raise BackupException('target file system will not allow to create that many files and directories')
@@ -108,7 +109,7 @@ class Create(Backup):
         self.scan_last_backup()
         if not self.files_changed and not force:
             raise BackupException('No changes detected, no need to backup')
-        logging.info('Need to copy {} in {} files'.format(filelist.nice_bytes(self.bytes_required), self.files_changed))
+        logging.info('Need to copy {} in {} files'.format(nice_bytes(self.bytes_required), self.files_changed))
         if confirm:
             input('type ENTER to execute')
         # check target
@@ -145,9 +146,9 @@ class Create(Backup):
             self.finalize_target()
             time_used = time.time() - t_start
             logging.info('Copied {} in {:.1f} seconds = {}/s'.format(
-                filelist.nice_bytes(self.bytes_required),
+                nice_bytes(self.bytes_required),
                 time_used,
-                filelist.nice_bytes(self.bytes_required/time_used)))
+                nice_bytes(self.bytes_required/time_used)))
             logging.info('Created {}'.format(self.base_name))
 
 
