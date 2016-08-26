@@ -23,6 +23,7 @@ import os
 
 from .restore import *
 from .error import BackupException
+from .string_escape import escaped
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,7 +71,7 @@ class EditBackup(Restore):
                     shutil.rmtree(item.backup_path)
                 item.parent.entries.remove(item)
             else:
-                raise BackupException('will not work on directories in non-recursive mode: {!r}'.format(filelist.escaped(source)))
+                raise BackupException('will not work on directories in non-recursive mode: {!r}'.format(escaped(source)))
         else:
             # parent temporarily needs to be writeable to remove files
             with writeable(item.parent.backup_path):
@@ -113,7 +114,7 @@ def action_rm(args):
     b = EditBackup()
     b.evaluate_arguments(args)
     entry = b.root[args.SRC]  # XXX just test if it is there. catch ex and print error
-    sys.stderr.write('Going to remove {}\n'.format(filelist.escaped(entry.path)))
+    sys.stderr.write('Going to remove {}\n'.format(escaped(entry.path)))
     ask_the_question()
     b.rm(args.SRC, args.recursive, args.force)
 

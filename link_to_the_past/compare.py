@@ -13,6 +13,7 @@ Compare backups and sources.
 from .restore import *
 from .create import *
 from . import filelist
+from .string_escape import escaped
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,18 +69,18 @@ def action_integrity(args):
     #~ logging.debug('scanning {}...'.format(b.root))
     for path, dirs, files in b.root.walk():
         for entry in dirs:
-            logging.debug('checking {}'.format(filelist.escaped(entry.path)))
+            logging.debug('checking {}'.format(escaped(entry.path)))
             if not os.path.isdir(entry.backup_path):
-                sys.stdout.write('MISSING {}\n'.format(filelist.escaped(entry.path)))
+                sys.stdout.write('MISSING {}\n'.format(escaped(entry.path)))
         for entry in files:
-            logging.debug('checking {}'.format(filelist.escaped(entry.path)))
+            logging.debug('checking {}'.format(escaped(entry.path)))
             status = 'OK'
             if os.path.exists(entry.backup_path):
                 if not entry.verify_hash(entry.backup_path):
                     status = 'CORRUPTED'
             else:
                 status = 'MISSING'
-            sys.stdout.write('{} {}\n'.format(status, filelist.escaped(entry.path)))
+            sys.stdout.write('{} {}\n'.format(status, escaped(entry.path)))
 
 
 def action_changes(args):
