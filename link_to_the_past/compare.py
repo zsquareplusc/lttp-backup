@@ -12,7 +12,6 @@ Compare backups and sources.
 
 from .restore import *
 from .create import *
-from . import filelist
 from .string_escape import escaped
 
 

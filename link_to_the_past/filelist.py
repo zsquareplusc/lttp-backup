@@ -35,6 +35,7 @@ from .string_escape import escaped, unescape
 def join(root, path):
     return os.path.normpath('{}{}{}'.format(root, os.sep, path))
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompareResult(object):
     """Store entry lists for compare operations."""

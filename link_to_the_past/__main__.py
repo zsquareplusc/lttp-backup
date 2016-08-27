@@ -18,6 +18,7 @@ import time
 from link_to_the_past import create, restore, edit, compare, profile
 from link_to_the_past.error import BackupException
 
+
 class HelpAllAction(argparse.Action):
 
     def __init__(self,

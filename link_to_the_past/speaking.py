@@ -40,8 +40,8 @@ def nice_bytes(value):
     else:
         return '{:.0f}B'.format(value)
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def mode_to_chars(mode):
     """\
     'ls' like mode as character sequence.

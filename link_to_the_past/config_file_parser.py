@@ -9,7 +9,6 @@ from link_to_the_past import *
 
 import sys
 import os
-import codecs
 import re
 
 m_comment = re.compile('(#.*$)', re.UNICODE)    # regexp to remove line comments
@@ -54,6 +53,7 @@ def words_in_file(filename, fileobj=None, include_newline=False):
         if include_newline:
             yield Word('\n', filename, n)
 
+
 def words_in_file_quick(filename, fileobj=None):
     """\
     Yield word for word of a file, with comments removed.
@@ -67,6 +67,7 @@ def words_in_file_quick(filename, fileobj=None):
         # - split on whitespace
         for word in m_comment.sub('', line.replace('\ ', '\\x20')).split():
             yield word
+
 
 class ControlFileParser(object):
     """\
@@ -118,8 +119,8 @@ class ControlFileParser(object):
         else:
             self.parse(words_in_file(filename))
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
     b = Backup()
     p = BackupControl(b)

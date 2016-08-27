@@ -10,7 +10,6 @@ Link To The Past - a backup tool
 Restore and inspection tool.
 """
 import os
-import fnmatch
 import shutil
 import logging
 
