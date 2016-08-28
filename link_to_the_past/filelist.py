@@ -31,6 +31,7 @@ from . import config_file_parser, hashes
 from .speaking import nice_bytes, mode_to_chars
 from .string_escape import escaped, unescape
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def join(root, path):
     return os.path.normpath('{}{}{}'.format(root, os.sep, path))
@@ -185,7 +186,7 @@ class BackupPath(object):
 class BackupFile(BackupPath):
     """Information about a file as well as operations"""
 
-    BLOCKSIZE = 1024*256   # 256kB
+    BLOCKSIZE = 1024 * 256   # 256kB
 
     def cp(self, dst, permissions=True):
         """\
@@ -467,6 +468,7 @@ class BackupDirectory(BackupPath):
     def __iter__(self):
         return self.entries.values()
 
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileList(BackupDirectory):
     """Manage a tree of files and directories."""
@@ -518,6 +520,7 @@ class FileList(BackupDirectory):
         if name.startswith(self.name):
             name = name[len(self.name):]
         return BackupDirectory.__getitem__(self, name)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class FileListParser(config_file_parser.ControlFileParser):

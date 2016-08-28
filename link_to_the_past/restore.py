@@ -10,11 +10,13 @@ Link To The Past - a backup tool
 Restore and inspection tool.
 """
 import os
+import sys
 import shutil
 import logging
 
 from . import filelist, timespec
-from .backup import *
+from .backup import Backup
+from .error import BackupException
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

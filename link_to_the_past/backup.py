@@ -13,8 +13,8 @@ import glob
 import logging
 
 from . import config_file_parser, profile, indexer
-#~ import filelist
 from .error import BackupException
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class Backup(object):
@@ -34,12 +34,12 @@ class Backup(object):
     def find_backups(self):
         """Return a list of names, of complete backups"""
         backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????'))
-        return [name[len(self.target_path)+len(os.sep):] for name in backups]
+        return [name[len(self.target_path) + len(os.sep):] for name in backups]
 
     def find_incomplete_backups(self):
         """Return a list of names, of incomplete backups"""
         backups = glob.glob(os.path.join(self.target_path, '????-??-??_??????_incomplete'))
-        return [name[len(self.target_path)+len(os.sep):] for name in backups]
+        return [name[len(self.target_path) + len(os.sep):] for name in backups]
 
     def find_latest_backup(self):
         """Locate the last backup. It is used as reference"""
@@ -72,6 +72,7 @@ class Backup(object):
         except IOError as e:
             logging.error('Failed to load configuration: {}'.format(e))
             sys.exit(1)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BackupControl(config_file_parser.ControlFileParser):

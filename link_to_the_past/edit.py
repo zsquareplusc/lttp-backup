@@ -17,11 +17,14 @@ deleted and there is an automatic delete function that keeps less
 backups the further back in time they were made.
 """
 
+import logging
 import shutil
 import stat
+import sys
 import os
 
-from .restore import *
+from . import filelist
+from .restore import Restore
 from .error import BackupException
 from .string_escape import escaped
 

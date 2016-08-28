@@ -45,16 +45,16 @@ def get_limit(timespec, now=None):
     if timespec.endswith('ago'):
         amount, unit, ago = timespec.split()
         if unit in ('hour', 'hours'):
-            delta = datetime.timedelta(seconds=3600*int(amount))
+            delta = datetime.timedelta(seconds=3600 * int(amount))
             return now - delta
         elif unit in ('day', 'days'):
-            delta = datetime.timedelta(days=int(amount)-1)
+            delta = datetime.timedelta(days=int(amount) - 1)
         elif unit in ('week', 'weeks'):
-            delta = datetime.timedelta(days=7*int(amount)-1)
+            delta = datetime.timedelta(days=7 * int(amount) - 1)
         elif unit in ('month', 'months'):
-            delta = datetime.timedelta(days=31*int(amount)-1)  # XXX not exact months
+            delta = datetime.timedelta(days=31 * int(amount) - 1)  # XXX not exact months
         elif unit in ('year', 'years'):
-            delta = datetime.timedelta(days=365*int(amount)-1)  # XXX not exact years
+            delta = datetime.timedelta(days=365 * int(amount) - 1)  # XXX not exact years
         else:
             raise ValueError('do not recognize unit (2nd word) in: {!r}'.format(timespec))
         limit = datetime.datetime(now.year, now.month, now.day) - delta

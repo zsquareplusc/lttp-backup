@@ -7,13 +7,15 @@
 """\
 Link To The Past - a backup tool
 """
-import time
+import logging
 import os
 import stat
-import logging
+import sys
+import time
 
 from . import filelist, indexer
-from .backup import *
+from .backup import Backup
+from .error import BackupException
 from .speaking import nice_bytes
 
 
@@ -91,8 +93,7 @@ class Create(Backup):
         if bytes_free < self.bytes_required:
             raise BackupException('not enough free space on target {} available but {} required'.format(
                 nice_bytes(bytes_free),
-                nice_bytes(self.bytes_required),
-                ))
+                nice_bytes(self.bytes_required)))
         if t.f_favail < len_iter(self.source_root.flattened()):
             raise BackupException('target file system will not allow to create that many files and directories')
 
@@ -135,8 +136,8 @@ class Create(Backup):
                     bytes_copied += p.stat.size
                 # XXX make this optional
                 if self.bytes_required:
-                    sys.stderr.write('{:5.1f}%\r'.format((100.0*bytes_copied/self.bytes_required)))
-            # secure directories (make them read-only too)
+                    sys.stderr.write('{:5.1f}%\r'.format((100.0 * bytes_copied / self.bytes_required)))
+            # secure dE116, irectories (make them read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
                 try:
@@ -148,7 +149,7 @@ class Create(Backup):
             logging.info('Copied {} in {:.1f} seconds = {}/s'.format(
                 nice_bytes(self.bytes_required),
                 time_used,
-                nice_bytes(self.bytes_required/time_used)))
+                nice_bytes(self.bytes_required / time_used)))
             logging.info('Created {}'.format(self.base_name))
 
 

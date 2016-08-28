@@ -9,10 +9,13 @@ Link To The Past - a backup tool
 
 Compare backups and sources.
 """
-
-from .restore import *
-from .create import *
+import logging
+import os
+import sys
+from .create import Create
+from .restore import Restore
 from .string_escape import escaped
+from .error import BackupException
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

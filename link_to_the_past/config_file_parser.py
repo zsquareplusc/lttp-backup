@@ -4,10 +4,10 @@
 # (C) 2012-2016 Chris Liechti <cliechti@gmx.net>
 #
 # SPDX-License-Identifier:    BSD-3-Clause
-
-from link_to_the_past import *
-
-import sys
+"""\
+Parser for a white space separated words, so that mini languages can be
+implemented. It's a Forth like syntax.
+"""
 import os
 import re
 
@@ -121,10 +121,4 @@ class ControlFileParser(object):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-if __name__ == '__main__':
-    b = Backup()
-    p = BackupControl(b)
-    p.parse(words_in_file(sys.argv[1]))
-    print(b)
-    print(b.source_locations)
-    print(b.source_locations[-1].excludes)
+#~ if __name__ == '__main__':

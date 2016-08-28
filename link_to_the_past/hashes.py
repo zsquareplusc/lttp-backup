@@ -61,7 +61,7 @@ SUPPORTED_HASHES = {
     'MD5':      hashlib.md5,
     'SHA-256':  hashlib.sha256,
     'SHA-512':  hashlib.sha512,
-    }
+}
 
 
 def get_factory(name):
