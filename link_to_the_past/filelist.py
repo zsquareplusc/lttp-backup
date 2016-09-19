@@ -165,8 +165,8 @@ class BackupPath(object):
     def __str__(self):
         return '{} {:4} {:4} {:>7} {} {}'.format(
             mode_to_chars(self.stat.mode),
-            self.stat.uid,
-            self.stat.gid,
+            self.stat.uid if self.stat.uid is not None else 'NONE',
+            self.stat.gid if self.stat.gid is not None else 'NONE',
             nice_bytes(self.stat.size),
             time.strftime('%Y-%m-%d %02H:%02M:%02S', time.localtime(self.stat.mtime)),
             escaped(self.path))
@@ -473,7 +473,7 @@ class BackupDirectory(BackupPath):
 class FileList(BackupDirectory):
     """Manage a tree of files and directories."""
     def __init__(self):
-        BackupDirectory.__init__(self, '/')
+        BackupDirectory.__init__(self, '/', filelist=self)
         self.root = None
         self.reference = None
         self.base_name = None
