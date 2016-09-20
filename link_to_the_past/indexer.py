@@ -80,9 +80,9 @@ class Location(object):
             parent = indexer.root
             for name in parents:
                 entry = parent.new_dir(name)
-                entry.stat.extract(os.lstat(entry.path))
+                entry.stat.extract(os.stat(entry.path, follow_symlinks=False))
                 parent = entry
-            self._scan(indexer, parent, os.lstat(path).st_dev)
+            self._scan(indexer, parent, os.stat(path, follow_symlinks=False).st_dev)
         else:
             raise BackupException('location is not a directory: {!r}'.format(self.path))
 
