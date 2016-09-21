@@ -40,6 +40,10 @@ def words_in_file(filename, fileobj=None, include_newline=False):
     """\
     Yield word for word of a file, with comments removed. Words are annotated
     with position in source file.
+
+    >>> z = words_in_file('dummy', ['first line', 'second line'])
+    >>> list(z)
+    [Word('first', 'dummy', 1), Word('line', 'dummy', 1), Word('second', 'dummy', 2), Word('line', 'dummy', 2)]
     """
     if fileobj is None:
         fileobj = open(filename, 'r', encoding='utf-8')
@@ -57,6 +61,10 @@ def words_in_file(filename, fileobj=None, include_newline=False):
 def words_in_file_quick(filename, fileobj=None):
     """\
     Yield word for word of a file, with comments removed.
+
+    >>> z = words_in_file_quick('dummy', ['first line', 'second line'])
+    >>> list(z)
+    ['first', 'line', 'second', 'line']
     """
     if fileobj is None:
         fileobj = open(filename, 'r', encoding='utf-8')
@@ -121,4 +129,6 @@ class ControlFileParser(object):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#~ if __name__ == '__main__':
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
