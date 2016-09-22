@@ -16,7 +16,13 @@ m_comment = re.compile('(#.*$)', re.UNICODE)    # regexp to remove line comments
 
 class Word(str):
     """\
-    Like a string but annotated with the position in the source file it was read from.
+    Like a string but annotated with the position in the source file it was read
+    from.
+
+    >>> print(Word('hello', 'world.txt', 1))
+    hello
+    >>> Word('hello', 'world.txt', 1)
+    Word('hello', 'world.txt', 1)
     """
     __slots__ = ['filename', 'lineno']
 
@@ -30,6 +36,10 @@ class Word(str):
         return Word(str.lower(self), self.filename, self.lineno)
 
     def __repr__(self):
+        """\
+        >>> print(repr(Word('hello', 'world.txt', 1)))
+        Word('hello', 'world.txt', 1)
+        """
         return "Word({}, {!r}, {!r})".format(
             str.__repr__(self),
             self.filename,
@@ -85,17 +95,43 @@ class ControlFileParser(object):
     Languages can be implemented by subclassing this one. Words are looked up
     on self, searching for methods with the name ``word_xxx`` where xxx stands
     for the word in lower case.
+
+    >>> class Lang(ControlFileParser):
+    ...     def word_hello(self):
+    ...         print("hello")
+    >>> lang = Lang()
+    >>> lang.interpret('hello')
+    hello
+    >>> lang.interpret('world')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: unknown word: 'world'
+    >>> lang.parse(iter(['hello', 'hello']))
+    hello
+    hello
     """
     def __init__(self):
         self.root = '.'
 
     def parse(self, iterator):
+        """Execute each word in a sequence"""
         self._iterator = iterator   # used in next_word
         for word in iterator:
             self.interpret(word)
         self._iterator = None
 
     def next_word(self):
+        """\
+        Get the next word from a sequence, can be used by words to get
+        parameters.
+        >>> class Lang(ControlFileParser):
+        ...     def word_print(self):
+        ...         print(self.next_word())
+        >>> lang = Lang()
+        >>> lang.parse(iter(['print', 'hello', 'print', 'world']))
+        hello
+        world
+        """
         return self._iterator.__next__()
 
     def interpret(self, word):
@@ -110,6 +146,13 @@ class ControlFileParser(object):
         """\
         Convert path to an absolute path. If it was relative, it is relative to
         the location of the loaded configuration file.
+
+        >>> c = ControlFileParser()
+        >>> c.path('somewhere')
+        './somewhere'
+        >>> c.root = '/at/some/point'
+        >>> c.path('somewhere')
+        '/at/some/point/somewhere'
         """
         path = os.path.expandvars(os.path.expanduser(path))
         if not os.path.isabs(path):
