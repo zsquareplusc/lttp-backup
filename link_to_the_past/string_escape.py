@@ -76,4 +76,16 @@ def _replace(m):
 
 
 def unescape(text):
+    """\
+    Remove escape sequences from a string.
+
+    >>> unescape('\\x41\\t\\u0042')
+    'A\\tB'
+    """
     return re_unescape.sub(_replace, text)
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

@@ -100,12 +100,6 @@ class ControlFileParser(object):
     ...     def word_hello(self):
     ...         print("hello")
     >>> lang = Lang()
-    >>> lang.interpret('hello')
-    hello
-    >>> lang.interpret('world')
-    Traceback (most recent call last):
-    ...
-    SyntaxError: unknown word: 'world'
     >>> lang.parse(iter(['hello', 'hello']))
     hello
     hello
@@ -135,6 +129,20 @@ class ControlFileParser(object):
         return self._iterator.__next__()
 
     def interpret(self, word):
+        """\
+        Interpret a single word.
+
+        >>> class Lang(ControlFileParser):
+        ...     def word_hello(self):
+        ...         print("hello")
+        >>> lang = Lang()
+        >>> lang.interpret('hello')
+        hello
+        >>> lang.interpret('world')
+        Traceback (most recent call last):
+        ...
+        SyntaxError: unknown word: 'world'
+        """
         try:
             function = getattr(self, 'word_{}'.format(word.lower()))
         except AttributeError:
@@ -153,6 +161,8 @@ class ControlFileParser(object):
         >>> c.root = '/at/some/point'
         >>> c.path('somewhere')
         '/at/some/point/somewhere'
+        >>> c.path('/already/there')
+        '/already/there'
         """
         path = os.path.expandvars(os.path.expanduser(path))
         if not os.path.isabs(path):
