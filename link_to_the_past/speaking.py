@@ -19,7 +19,7 @@ EXPONENTS = ('', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
 def nice_bytes(value):
     """\
     Return a string for a number representing bytes in a human readable form
-    (1kB=1000B as usual for storage devices now days).
+    (1kB=1000B as usual for storage devices nowdays).
 
     >>> nice_bytes(1024)
     '1.0kB'

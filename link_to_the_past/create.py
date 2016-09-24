@@ -33,8 +33,8 @@ class Create(Backup):
     """Common backup description."""
     def __init__(self):
         Backup.__init__(self)
-        self.source_root = filelist.FileList()
-        self.backup_root = filelist.FileList()
+        self.source_root = filelist.FileList()  # current files
+        self.backup_root = filelist.FileList()  # previous backup
         self.bytes_required = 0
         self.files_changed = 0
         self.indexer = indexer.Indexer(self.source_root)

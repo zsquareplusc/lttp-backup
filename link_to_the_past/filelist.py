@@ -563,10 +563,5 @@ class FileListParser(config_file_parser.ControlFileParser):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if __name__ == '__main__':
-    #~ f = FileList()
-    #~ f.load('test/example_backups/2012-09-07_043453/file_list')
-    #~ for entry in f.flattened():
-        #~ print(entry)
-
     import doctest
     doctest.testmod()
