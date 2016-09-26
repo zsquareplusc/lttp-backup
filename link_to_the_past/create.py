@@ -22,10 +22,7 @@ from .speaking import nice_bytes
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def len_iter(iterator):
     """Count items in an iterator"""
-    n = 0
-    for item in iterator:
-        n += 1
-    return n
+    return sum(1 for i in iterator)
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -137,7 +134,7 @@ class Create(Backup):
                 # XXX make this optional
                 if self.bytes_required:
                     sys.stderr.write('{:5.1f}%\r'.format((100.0 * bytes_copied / self.bytes_required)))
-            # secure dE116, irectories (make them read-only too)
+            # secure directories (make them read-only too)
             logging.debug('Making directories read-only')
             for p in self.source_root.flattened():
                 try:

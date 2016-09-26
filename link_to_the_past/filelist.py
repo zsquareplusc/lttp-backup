@@ -43,7 +43,8 @@ class CompareResult(object):
 
     __slots__ = ('same', 'same_other', 'changed', 'changed_other', 'added', 'removed')
 
-    def __init__(self, same=None, same_other=None, changed=None, changed_other=None, added=None, removed=None):
+    def __init__(self, same=None, same_other=None, changed=None,
+                 changed_other=None, added=None, removed=None):
         self.same = same if same is not None else []
         self.same_other = same_other if same_other is not None else []
         self.changed = changed if changed is not None else []
