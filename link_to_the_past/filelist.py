@@ -531,6 +531,8 @@ class FileListParser(config_file_parser.ControlFileParser):
         super().__init__()
         self.filelist = filelist
         self.filelist.set_hash(None)
+        self.last_parent_path = None
+        self.last_parent = None
 
     def word_hash(self):
         """Set the hash function"""
@@ -558,7 +560,13 @@ class FileListParser(config_file_parser.ControlFileParser):
         entry.data_hash = self.next_word()
         path = unescape(self.next_word())
         path, entry.name = os.path.split(path)
-        entry.parent = self.filelist[path]
+        if path == self.last_parent_path:
+            entry.parent = self.last_parent
+        else:
+            # cache last parent to speed up
+            entry.parent = self.filelist[path]
+            self.last_parent_path = path
+            self.last_parent = entry.parent
         entry.parent.entries[entry.name] = entry
 
 
